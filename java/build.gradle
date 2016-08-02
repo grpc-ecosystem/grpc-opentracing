@@ -1,0 +1,18 @@
+description = "grpc-java: OpenTracing"
+
+apply plugin: "java"
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+}
+
+jar {
+    baseName 'grpc-opentracing'
+    version = '0.1.0'
+}
+
+dependencies {
+    compile 'io.grpc:grpc-core:1.0.0-pre1'
+    compile 'io.opentracing:opentracing-api:0.10.0'
+}
