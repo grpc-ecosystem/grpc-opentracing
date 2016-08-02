@@ -8,7 +8,7 @@ public class OpenTracingContextKey {
     
     private static final Context.Key<Span> key = Context.key("ot-active-span");
 
-    public static Context.Key<Span> get() {
-        return key.get();
+    public static Context.Key<Span> activeSpan() {
+        return key;
     }
 }
