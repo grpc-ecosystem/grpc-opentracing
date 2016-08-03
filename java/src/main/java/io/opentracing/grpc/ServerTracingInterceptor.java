@@ -20,12 +20,14 @@ import java.util.Map;
 
 public class ServerTracingInterceptor implements ServerInterceptor {
     
-    // TODO: use builder to make configurable
-
     private final Tracer tracer;
+    // options for server tracing:
+    //  Custom server name
+    //  headers.toString()
+    //  call.attributes()
+    //  call.getMethodDescriptor()
 
     public ServerTracingInterceptor(Tracer tracer) {
-        System.out.println("creating ServerTracingInterceptor");
         this.tracer = tracer;
     }
     
@@ -36,128 +38,113 @@ public class ServerTracingInterceptor implements ServerInterceptor {
         ServerCallHandler<ReqT, RespT> next
     ) {
         System.out.println("intercepting server call");
-        String EXTRACT_FAIL_MSG = "Extract failed and an IllegalArgumentException was thrown";
-        String ERROR = "Error";
+        System.out.println("Context in server: " + Context.current().toString());
+        Span testSpan = tracer.buildSpan("test-span").start();
+        testSpan.finish();
 
         Map<String, String> headerMap = new HashMap<String, String>();
         for (String key : headers.keys()) {
             String value = headers.get(Metadata.Key.of(key, Metadata.ASCII_STRING_MARSHALLER));
             headerMap.put(key, value);
         }
-        System.out.println("headers: " + headerMap.toString());
+
+        System.out.println("Headers: " + headerMap.toString());
+
         String operationName = call.getMethodDescriptor().getFullMethodName();
+
+        System.out.println("operation name: " + operationName);
+
+        final Span span = getSpanFromHeaders(headerMap, operationName);
+
+        span.setTag("server at:", System.currentTimeMillis()); 
+
+        // Context.CancellableContext withSpan = Context.current().withValue(OpenTracingContextKey.getKey(), span).withCancellation();
+        // withSpan.attach();
+
+        // ServerCallHandler<ReqT, RespT> nextWithTracing = new TracedServerCallHandler<ReqT, RespT>(next, span);
 
         return new ForwardingServerCallListener.SimpleForwardingServerCallListener<ReqT>(next.startCall(call, headers)) {
 
-            private Context previousCtx = Context.ROOT;
-
             @Override
             public void onMessage(ReqT message) {
-                System.out.println("server running onMessage");
-                Span span;
-
-                try {
-                    SpanContext parentSpanCtx = tracer.extract(Format.Builtin.HTTP_HEADERS, new TextMapExtractAdapter(headerMap));
-                    if (parentSpanCtx == null) {
-                        span = tracer.buildSpan(operationName).start();
-                    } else {
-                        span = tracer.buildSpan(operationName).asChildOf(parentSpanCtx).start();
-                    }
-                } catch (IllegalArgumentException iae){
-                    span = tracer.buildSpan(operationName).withTag(ERROR, EXTRACT_FAIL_MSG).start();
-                }    
-                span.setTag("server at:", System.currentTimeMillis());    
-
-                OpenTracingContextKey.activeSpan().get();        
-
-                // System.out.println("Current context (before)");
-                // System.out.println(Context.current());
-
-                Context ctxWithSpan = Context.current().withValue(OpenTracingContextKey.activeSpan(), span);
-
-                // System.out.println("Current context (after, should be same)");
-                // System.out.println(Context.current());
-                // System.out.println("ctxWithSpan, should be different?");
-                // System.out.println(ctxWithSpan);
-
-                // this.previousCtx = ctxWithSpan.attach();
-
-                // System.out.println("previous ctx (Should be like first 2)");
-                // System.out.println(previousCtx);
-                // System.out.println("current context now (Should be like 3rd)");
-                // System.out.println(Context.current());
-
+                System.out.println("server received message");
+                // Context withSpan = Context.current().withValue(OpenTracingContextKey.getKey(), span);
+                // withSpan.attach();
+                // System.out.println("Context withSpan " + withSpan.toString());
                 delegate().onMessage(message);
-
-                System.out.println("finished onMessage");
             }
 
             @Override
             public void onCancel() {
-                System.out.println("Server running onCancel");
-                System.out.println("context: " + Context.current().toString());
-                OpenTracingContextKey.activeSpan().get().finish();
-                // Context.current().detach(this.previousCtx);
+                System.out.println("cancelling server call");
+                span.finish();
                 delegate().onCancel();
-                System.out.println("finished onCancel");
             }
 
             @Override
             public void onComplete() {
-                System.out.println("server running onComplete");
-                System.out.println("context: " + Context.current().toString());
-                try {
-                    OpenTracingContextKey.activeSpan().get();
-                } catch (NullPointerException npe) {
-                    System.out.println("there was no server span to finish :(");
-                }
-                // Context.current().detach(this.previousCtx);
+                System.out.println("completing server call");
+                span.finish();
                 delegate().onComplete();
-                System.out.println("finished onComplete");
             }
-        };
+        }; 
+    }
 
-
-        // return next.startCall(new SimpleForwardingServerCall<ReqT, RespT>(call) {
-        //     @Override
-        //     public void close(Status status, Metadata trailers) {
-        //         span.finish();
-        //         delegate().close(status, trailers);
-        //     }
-        // }, headers);
-
-
-        // return new ServerCallHandler<RequestT, ResponseT>() {
-        //     @Override
-        //     ServerCall.Listener<RequestT> startCall(ServerCall<RequestT, ResponseT> call, Metadata headers) {
-        //         return new ServerCall.Listener<ReqT> {
-        //             @Override
-        //             public void onCancel() {
-
-        //             }
-        //         }
-        //     }
-        // }
-
-
-        // System.out.println("Contexts in interceptor");
-        // System.out.println(OpenTracingContextKey.get().get());
-
-        // ServerCall.Listener<ReqT> listener = next.startCall(call, headers);
-
-
-        // System.out.println("call was started");
-        // try {
-        //     Thread.sleep(1000);
-        // } catch (Exception e) {
-        //     System.out.println("Thread did not sleep");
-        // }
-        // ctxWithSpan.detach(previousCtx);
-
-        // System.out.println("context was detached");
-        // span.finish(); 
+    private Span getSpanFromHeaders(Map<String, String> headers, String operationName) {
+        String EXTRACT_FAIL_MSG = "Extract failed and an IllegalArgumentException was thrown";
+        Span span;
+        try {
+            SpanContext parentSpanCtx = tracer.extract(Format.Builtin.HTTP_HEADERS, new TextMapExtractAdapter(headers));
+            if (parentSpanCtx == null) {
+                System.out.println("span created w null parent");
+                span = tracer.buildSpan(operationName).start();
+            } else {
+                System.out.println("span created from parent");
+                span = tracer.buildSpan(operationName).asChildOf(parentSpanCtx).start();
+            }
+        } catch (IllegalArgumentException iae){
+            System.out.println("Span created no parent (error)");
+            span = tracer.buildSpan(operationName).withTag("Error", EXTRACT_FAIL_MSG).start();
+        }
+        return span;  
     }
 }
+
+
+
+class TracedServerCallHandler<ReqT, RespT> implements ServerCallHandler<ReqT, RespT> {
+
+    private final ServerCallHandler untracedHandler;
+    private final Span span;
+
+    public TracedServerCallHandler(ServerCallHandler handler, Span span) {
+        this.untracedHandler = handler;
+        this.span = span;
+    }
+
+    @Override
+    public ServerCall.Listener<ReqT> startCall(
+        ServerCall<ReqT, RespT> call,
+        Metadata headers
+    ) {
+        Context withSpan = Context.current().withValue(OpenTracingContextKey.getKey(), span);
+        Context previousCtx = withSpan.attach();
+        ServerCall.Listener<ReqT> listener;
+        try {
+            listener = untracedHandler.startCall(call, headers);
+        } finally {
+            withSpan.detach(previousCtx);
+        }
+        return listener;
+    }
+}
+
+// Server interceptor is created once for the server -- initialized with a tracer
+// interceptCall is called everytime there is a new call; this is where we can create a span
+//      create in beginning of function (final Span = getSpanFromHeaders())
+//      log things like messageSend etc
+//      onComplete / onCancel= finish span
+//      
 
 
 // Note on streaming requests/responses:
