@@ -9,20 +9,21 @@ Installation
 This package is available on Maven Central and can be added to your project as follows:
 
 **Maven**
-```
-<dependencies>
-	<dependency>
-		<groupId>io.opentracing.contrib.grpc</groupId>
-		<artifactId>grpc-opentracing</artifactId>
-		<version>0.1.0</version>
-	</dependency>
-</dependencies>
-```
+
+.. code-block::
+	<dependencies>
+		<dependency>
+			<groupId>io.opentracing.contrib.grpc</groupId>
+			<artifactId>grpc-opentracing</artifactId>
+			<version>0.1.0</version>
+		</dependency>
+	</dependencies>
 
 **Gradle**
-```
-compile 'io.opentracing.contrib.grpc:grpc-opentracing:0.1.0'
-```
+
+.. code-block::
+	
+	compile 'io.opentracing.contrib.grpc:grpc-opentracing:0.1.0'
 
 **Note:** This package was developed using grpc-java v1.0.0-pre1.
 
@@ -38,7 +39,8 @@ If you want to add basic tracing to your clients and servers, you can do so in a
 - Create a `ClientTracingInterceptor`
 - Intercept the client channel
 
-	```java
+.. code-block:: java
+
 	public class YourClient {
 
 		private final ManagedChannel channel;
@@ -55,14 +57,15 @@ If you want to add basic tracing to your clients and servers, you can do so in a
 			blockingStub = GreeterGrpc.newBlockingStub(tracingInterceptor.intercept(channel));
 		}
 	}
-	```
+
 **Servers**
 
 - Instantiate a tracer
 - Create a `ServerTracingInterceptor`
 - Intercept a service 
 	
-	```java
+.. code-block:: java
+
 	public class YourServer {
 
 		private int port;
@@ -86,7 +89,6 @@ If you want to add basic tracing to your clients and servers, you can do so in a
 			});
 		}
 	}
-	```
 
 ==============
 Server Tracing
