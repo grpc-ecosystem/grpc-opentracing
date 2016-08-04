@@ -173,6 +173,10 @@ For example:
     // make sure to finish any manually created spans!
     childSpan.finish();
 
+Continuing a Trace
+------------------
+
+Sometimes you may have a client that is created within the scope of a service. If this service is traced, and there is an active span present in `Context.current()`, then the ClientTracingInterceptor will recognize the active span and continue the current trace automatically.
 
 ===================================
 Integrating with Other Interceptors
