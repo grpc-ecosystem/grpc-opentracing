@@ -144,7 +144,7 @@ public class ClientTracingInterceptor implements ClientInterceptor {
 
                     @Override
                     public void onMessage(RespT message) {
-                        if (verbose) { span.log("Response received", null); }
+                        if (streaming || verbose) { span.log("Response received", null); }
                         delegate().onMessage(message);
                     }
 
@@ -187,7 +187,7 @@ public class ClientTracingInterceptor implements ClientInterceptor {
 
             @Override
             public void sendMessage(ReqT message) {
-                if (streaming) { span.log("Message sent", null); }
+                if (streaming || verbose) { span.log("Message sent", null); }
                 delegate().sendMessage(message);
             }
         };

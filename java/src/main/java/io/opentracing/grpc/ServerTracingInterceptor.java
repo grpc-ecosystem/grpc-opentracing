@@ -103,7 +103,7 @@ public class ServerTracingInterceptor implements ServerInterceptor {
 
             @Override
             public void onMessage(ReqT message) {
-                if (streaming) { span.log("Message received", message); }
+                if (streaming || verbose) { span.log("Message received", message); }
                 delegate().onMessage(message);
             }
 
@@ -115,7 +115,7 @@ public class ServerTracingInterceptor implements ServerInterceptor {
 
             @Override
             public void onCancel() {
-                if (verbose) { span.log("Call cancelled", null); }
+                span.log("Call cancelled", null);
                 span.finish();
                 delegate().onCancel();
             }
