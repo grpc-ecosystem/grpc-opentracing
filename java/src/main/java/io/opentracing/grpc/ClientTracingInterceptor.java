@@ -14,7 +14,7 @@ import io.grpc.MethodDescriptor;
 import io.grpc.Status;
 
 import io.opentracing.contrib.grpc.OpenTracingContextKey;
-import io.opentracing.contrib.grpc.ClientAttribute;
+import io.opentracing.contrib.grpc.ClientRequestAttribute;
 import io.opentracing.Tracer;
 import io.opentracing.Span;
 import io.opentracing.propagation.TextMap;
@@ -33,26 +33,17 @@ public class ClientTracingInterceptor implements ClientInterceptor {
     private final String operationName;
     private final boolean streaming;
     private final boolean verbose;
-    private final Set<ClientAttribute> tracedAttributes;
-    // options for Client Tracing:
-    //  method.getType (unary, streaming, etc)
-    //  method.getFullMethodName
-    //  callOptions.getDeadline
-    //  callOptions.getCompressor
-    //  callOptions.getAffinity
-    //  callOptions.getAuthority
-    //  or just callOptions.toString()
-    //  headers.toString()
+    private final Set<ClientRequestAttribute> tracedAttributes;
 
     public ClientTracingInterceptor(Tracer tracer) {
         this.tracer = tracer;
         this.operationName = "";
         this.streaming = false;
         this.verbose = false;
-        this.tracedAttributes = new HashSet<ClientAttribute>();
+        this.tracedAttributes = new HashSet<ClientRequestAttribute>();
     }
 
-    private ClientTracingInterceptor(Tracer tracer, String operationName, boolean streaming, boolean verbose, Set<ClientAttribute> tracedAttributes) {
+    private ClientTracingInterceptor(Tracer tracer, String operationName, boolean streaming, boolean verbose, Set<ClientRequestAttribute> tracedAttributes) {
         this.tracer = tracer;
         this.operationName = operationName;
         this.streaming = streaming;
@@ -79,11 +70,60 @@ public class ClientTracingInterceptor implements ClientInterceptor {
 
         Span activeSpan = OpenTracingContextKey.activeSpan();
         final Span span = createSpanFromParent(activeSpan, operationName);
+        System.out.println("Started span " + span.toString());
+
+        for (ClientRequestAttribute attr : this.tracedAttributes) {
+            switch (attr) {
+                case AFFINITY:
+                    if (callOptions.getAffinity() == null) {
+                        span.setTag("Affinity", "null");
+                    } else {
+                        span.setTag("Affinity", callOptions.getAffinity().toString());
+                    }  
+                    break;
+                case ALL_CALL_OPTIONS:
+                    span.setTag("Call Options", callOptions.toString());
+                    break;
+                case AUTHORITY:
+                    if (callOptions.getAuthority() == null) {
+                        span.setTag("Authority", "null");
+                    } else {
+                        span.setTag("Authority", callOptions.getAuthority());                        
+                    }
+                    break;
+                case COMPRESSOR:
+                    if (callOptions.getCompressor() == null) {
+                        span.setTag("Compressor", "null");
+                    } else {
+                        span.setTag("Compressor", callOptions.getCompressor());
+                    }
+                    break;
+                case DEADLINE:
+                    if (callOptions.getDeadline() == null) {
+                        span.setTag("Deadline", "null");
+                    } else {
+                        span.setTag("Deadline", callOptions.getDeadline().toString());
+                    }
+                    break;
+                case METHOD_NAME:
+                    span.setTag("Method Name", method.getFullMethodName());
+                    break;
+                case METHOD_TYPE:
+                    if (method.getType() == null) {
+                        span.setTag("Method Type", "null");
+                    } else {
+                        span.setTag("Method Type", method.getType().toString());
+                    }
+                    break;
+            }
+        }
 
         return new ForwardingClientCall.SimpleForwardingClientCall<ReqT, RespT>(next.newCall(method, callOptions)) {
             @Override
             public void start(Listener<RespT> responseListener, Metadata headers) {
-                if (verbose) { span.log("Call started", null); }
+                if (verbose) { span.log("Started call", null); }
+                if (tracedAttributes.contains(ClientRequestAttribute.HEADERS)) { span.setTag("Headers", headers.toString()); }
+
                 tracer.inject(span.context(), Format.Builtin.HTTP_HEADERS, new TextMap() {
                     @Override
                     public Iterator<Map.Entry<String, String>> getEntries() {
@@ -99,12 +139,12 @@ public class ClientTracingInterceptor implements ClientInterceptor {
                 Listener<RespT> tracingResponseListener = new ForwardingClientCallListener.SimpleForwardingClientCallListener<RespT>(responseListener) {
                     @Override
                     public void onHeaders(Metadata headers) {
-                        if (verbose) { span.log("Headers received", headers.toString()); }
+                        if (verbose) { span.log("Response headers received", headers.toString()); }
                     }
 
                     @Override
                     public void onMessage(RespT message) {
-                        if (verbose) { span.log("Response received", message); }
+                        if (verbose) { span.log("Response received", null); }
                         delegate().onMessage(message);
                     }
 
@@ -123,7 +163,7 @@ public class ClientTracingInterceptor implements ClientInterceptor {
 
             @Override 
             public void cancel(@Nullable String message, @Nullable Throwable cause) {
-                if (verbose) { 
+                // if (verbose) { 
                     String errorMessage;
                     if (message == null) {
                         errorMessage = "Error";
@@ -135,19 +175,19 @@ public class ClientTracingInterceptor implements ClientInterceptor {
                     } else {
                         span.log(errorMessage, cause.getMessage());
                     }
-                }
+                // }
                 delegate().cancel(message, cause);
             }
 
             @Override
             public void halfClose() {
-                if (verbose) { span.log("All messages sent", null); }
+                if (verbose) { span.log("Finished sending messages", null); }
                 delegate().halfClose();
             }
 
             @Override
             public void sendMessage(ReqT message) {
-                if (verbose) { span.log("Message sent", message); }
+                if (streaming) { span.log("Message sent", null); }
                 delegate().sendMessage(message);
             }
         };
@@ -161,20 +201,20 @@ public class ClientTracingInterceptor implements ClientInterceptor {
         }
     }
 
-    private static class Builder {
+    public static class Builder {
 
         private Tracer tracer;
         private String operationName;
         private boolean streaming;
         private boolean verbose;
-        private Set<ClientAttribute> tracedAttributes;  
+        private Set<ClientRequestAttribute> tracedAttributes;  
 
         public Builder(Tracer tracer) {
             this.tracer = tracer;
             this.operationName = "";
             this.streaming = false;
             this.verbose = false;
-            this.tracedAttributes = new HashSet<ClientAttribute>();
+            this.tracedAttributes = new HashSet<ClientRequestAttribute>();
         } 
 
         public Builder withOperationName(String operationName) {
@@ -187,8 +227,8 @@ public class ClientTracingInterceptor implements ClientInterceptor {
             return this;
         }
 
-        public Builder withTracedAttributes(ClientAttribute... tracedAttributes) {
-            this.tracedAttributes = new HashSet<ClientAttribute>(Arrays.asList(tracedAttributes));
+        public Builder withTracedAttributes(ClientRequestAttribute... tracedAttributes) {
+            this.tracedAttributes = new HashSet<ClientRequestAttribute>(Arrays.asList(tracedAttributes));
             return this;
         }
 
