@@ -15,18 +15,21 @@ import io.grpc.Status;
 
 import io.opentracing.contrib.grpc.OpenTracingContextKey;
 import io.opentracing.contrib.grpc.ClientRequestAttribute;
-import io.opentracing.Tracer;
-import io.opentracing.Span;
 import io.opentracing.propagation.TextMap;
 import io.opentracing.propagation.Format;
+import io.opentracing.Span;
+import io.opentracing.Tracer;
 
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 import java.util.HashSet;
-import java.util.Arrays;
+import java.util.Set;
 import javax.annotation.Nullable;
 
+/** 
+ * An interceptor that applies tracing via OpenTracing to all client requests. 
+ */ 
 public class ClientTracingInterceptor implements ClientInterceptor {
     
     private final Tracer tracer;
@@ -35,6 +38,9 @@ public class ClientTracingInterceptor implements ClientInterceptor {
     private final boolean verbose;
     private final Set<ClientRequestAttribute> tracedAttributes;
 
+    /**
+     * @param tracer to use to trace requests
+     */
     public ClientTracingInterceptor(Tracer tracer) {
         this.tracer = tracer;
         this.operationName = "";
@@ -43,7 +49,8 @@ public class ClientTracingInterceptor implements ClientInterceptor {
         this.tracedAttributes = new HashSet<ClientRequestAttribute>();
     }
 
-    private ClientTracingInterceptor(Tracer tracer, String operationName, boolean streaming, boolean verbose, Set<ClientRequestAttribute> tracedAttributes) {
+    private ClientTracingInterceptor(Tracer tracer, String operationName, boolean streaming,
+        boolean verbose, Set<ClientRequestAttribute> tracedAttributes) {
         this.tracer = tracer;
         this.operationName = operationName;
         this.streaming = streaming;
@@ -51,6 +58,10 @@ public class ClientTracingInterceptor implements ClientInterceptor {
         this.tracedAttributes = tracedAttributes;
     }
 
+    /**
+     * Use this interceptor to trace all requests made by this client channel.
+     * @param channel to be traced
+     */ 
     public Channel intercept(Channel channel) {
         return ClientInterceptors.intercept(channel, this);
     }
@@ -119,10 +130,15 @@ public class ClientTracingInterceptor implements ClientInterceptor {
         }
 
         return new ForwardingClientCall.SimpleForwardingClientCall<ReqT, RespT>(next.newCall(method, callOptions)) {
+
             @Override
             public void start(Listener<RespT> responseListener, Metadata headers) {
-                if (verbose) { span.log("Started call", null); }
-                if (tracedAttributes.contains(ClientRequestAttribute.HEADERS)) { span.setTag("Headers", headers.toString()); }
+                if (verbose) { 
+                    span.log("Started call", null);
+                }
+                if (tracedAttributes.contains(ClientRequestAttribute.HEADERS)) {
+                    span.setTag("Headers", headers.toString()); 
+                }
 
                 tracer.inject(span.context(), Format.Builtin.HTTP_HEADERS, new TextMap() {
                     @Override
@@ -136,7 +152,9 @@ public class ClientTracingInterceptor implements ClientInterceptor {
                         headers.put(headerKey, value);
                     }
                 });                    
-                Listener<RespT> tracingResponseListener = new ForwardingClientCallListener.SimpleForwardingClientCallListener<RespT>(responseListener) {
+                Listener<RespT> tracingResponseListener = new ForwardingClientCallListener
+                    .SimpleForwardingClientCallListener<RespT>(responseListener) {
+
                     @Override
                     public void onHeaders(Metadata headers) {
                         if (verbose) { span.log("Response headers received", headers.toString()); }
@@ -163,25 +181,23 @@ public class ClientTracingInterceptor implements ClientInterceptor {
 
             @Override 
             public void cancel(@Nullable String message, @Nullable Throwable cause) {
-                // if (verbose) { 
-                    String errorMessage;
-                    if (message == null) {
-                        errorMessage = "Error";
-                    } else {
-                        errorMessage = message;
-                    }
-                    if (cause == null) {
-                        span.log(errorMessage, null);
-                    } else {
-                        span.log(errorMessage, cause.getMessage());
-                    }
-                // }
+                String errorMessage;
+                if (message == null) {
+                    errorMessage = "Error";
+                } else {
+                    errorMessage = message;
+                }
+                if (cause == null) {
+                    span.log(errorMessage, null);
+                } else {
+                    span.log(errorMessage, cause.getMessage());
+                }
                 delegate().cancel(message, cause);
             }
 
             @Override
             public void halfClose() {
-                if (verbose) { span.log("Finished sending messages", null); }
+                if (streaming) { span.log("Finished sending messages", null); }
                 delegate().halfClose();
             }
 
@@ -201,6 +217,9 @@ public class ClientTracingInterceptor implements ClientInterceptor {
         }
     }
 
+    /**
+     * Builds the configuration of a ClientTracingInterceptor.
+     */
     public static class Builder {
 
         private Tracer tracer;
@@ -209,6 +228,10 @@ public class ClientTracingInterceptor implements ClientInterceptor {
         private boolean verbose;
         private Set<ClientRequestAttribute> tracedAttributes;  
 
+        /**
+         * @param tracer to use for this interceptor
+         * @return a Builder with default configuration
+         */
         public Builder(Tracer tracer) {
             this.tracer = tracer;
             this.operationName = "";
@@ -217,28 +240,50 @@ public class ClientTracingInterceptor implements ClientInterceptor {
             this.tracedAttributes = new HashSet<ClientRequestAttribute>();
         } 
 
+        /**
+         * @param operationName for all spans created by this interceptor
+         * @return this Builder with configured operation name
+         */
         public Builder withOperationName(String operationName) {
             this.operationName = operationName;
             return this;
         } 
 
+        /**
+         * Logs streaming events to client spans.
+         * @return this Builder configured to log streaming events
+         */
         public Builder withStreaming() {
             this.streaming = true;
             return this;
         }
 
+        /**
+         * @param tracedAttributes to set as tags on client spans
+         *  created by this interceptor
+         * @return this Builder configured to trace attributes
+         */
         public Builder withTracedAttributes(ClientRequestAttribute... tracedAttributes) {
-            this.tracedAttributes = new HashSet<ClientRequestAttribute>(Arrays.asList(tracedAttributes));
+            this.tracedAttributes = new HashSet<ClientRequestAttribute>(
+                Arrays.asList(tracedAttributes));
             return this;
         }
 
+        /**
+         * Logs all request lifecycle events to client spans.
+         * @return this Builder configured to be verbose
+         */
         public Builder withVerbosity() {
             this.verbose = true;
             return this;
         }
 
+        /**
+         * @return a ClientTracingInterceptor with this Builder's configuration
+         */
         public ClientTracingInterceptor build() {
-            return new ClientTracingInterceptor(this.tracer, this.operationName, this.streaming, this.verbose, this.tracedAttributes);
+            return new ClientTracingInterceptor(this.tracer, this.operationName, 
+                this.streaming, this.verbose, this.tracedAttributes);
         }
     
     }

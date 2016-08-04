@@ -26,6 +26,10 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.Arrays;
 
+/**
+ * An interceptor that applies tracing via OpenTracing to all requests 
+ * to the server.
+ */
 public class ServerTracingInterceptor implements ServerInterceptor {
     
     private final Tracer tracer;
@@ -34,6 +38,9 @@ public class ServerTracingInterceptor implements ServerInterceptor {
     private final boolean verbose;
     private final Set<ServerRequestAttribute> tracedAttributes; 
 
+    /**
+     * @param tracer used to trace requests
+     */
     public ServerTracingInterceptor(Tracer tracer) {
         this.tracer = tracer;
         this.operationName = "";
@@ -42,7 +49,8 @@ public class ServerTracingInterceptor implements ServerInterceptor {
         this.tracedAttributes = new HashSet<ServerRequestAttribute>();
     }
 
-    private ServerTracingInterceptor(Tracer tracer, String operationName, boolean streaming, boolean verbose, Set<ServerRequestAttribute> tracedAttributes) {
+    private ServerTracingInterceptor(Tracer tracer, String operationName, boolean streaming,
+        boolean verbose, Set<ServerRequestAttribute> tracedAttributes) {
         this.tracer = tracer;
         this.operationName = operationName;
         this.streaming = streaming;
@@ -50,10 +58,16 @@ public class ServerTracingInterceptor implements ServerInterceptor {
         this.tracedAttributes = tracedAttributes;
     }
 
+    /**
+     * Add tracing to all requests made to this service.
+     */
     public ServerServiceDefinition intercept(ServerServiceDefinition serviceDef) {
         return ServerInterceptors.intercept(serviceDef, this);
     }
 
+    /**
+     * Add tracing to all requests made to this service.
+     */
     public ServerServiceDefinition intercept(BindableService bindableService) {
         return ServerInterceptors.intercept(bindableService, this);
     }
@@ -96,7 +110,8 @@ public class ServerTracingInterceptor implements ServerInterceptor {
         }
 
         Context ctxWithSpan = Context.current().withValue(OpenTracingContextKey.getKey(), span);
-        ServerCall.Listener<ReqT> listenerWithContext = Contexts.interceptCall(ctxWithSpan, call, headers, next);
+        ServerCall.Listener<ReqT> listenerWithContext = Contexts
+            .interceptCall(ctxWithSpan, call, headers, next);
 
         ServerCall.Listener<ReqT> tracingListenerWithContext = 
             new ForwardingServerCallListener.SimpleForwardingServerCallListener<ReqT>(listenerWithContext) {
@@ -109,7 +124,7 @@ public class ServerTracingInterceptor implements ServerInterceptor {
 
             @Override 
             public void onHalfClose() {
-                if (verbose) { span.log("Client finished sending messages", null); }
+                if (streaming) { span.log("Client finished sending messages", null); }
                 delegate().onHalfClose();
             }
 
@@ -134,7 +149,8 @@ public class ServerTracingInterceptor implements ServerInterceptor {
     private Span getSpanFromHeaders(Map<String, String> headers, String operationName) {
         Span span;
         try {
-            SpanContext parentSpanCtx = tracer.extract(Format.Builtin.HTTP_HEADERS, new TextMapExtractAdapter(headers));
+            SpanContext parentSpanCtx = tracer.extract(Format.Builtin.HTTP_HEADERS, 
+                new TextMapExtractAdapter(headers));
             if (parentSpanCtx == null) {
                 span = tracer.buildSpan(operationName).start();
             } else {
@@ -148,6 +164,9 @@ public class ServerTracingInterceptor implements ServerInterceptor {
         return span;  
     }
 
+    /**
+     * Builds the configuration of a ServerTracingInterceptor.
+     */
     public static class Builder {
         private final Tracer tracer;
         private String operationName;
@@ -155,6 +174,10 @@ public class ServerTracingInterceptor implements ServerInterceptor {
         private boolean verbose;
         private Set<ServerRequestAttribute> tracedAttributes;
 
+        /**
+         * @param tracer to use for this interceptor
+         * @return a Builder with default configuration
+         */
         public Builder(Tracer tracer) {
             this.tracer = tracer;
             this.operationName = "";
@@ -163,28 +186,49 @@ public class ServerTracingInterceptor implements ServerInterceptor {
             this.tracedAttributes = new HashSet<ServerRequestAttribute>();
         }
 
+        /**
+         * @param operationName for all spans created by this interceptor
+         * @return this Builder with configured operation name
+         */
         public Builder withOperationName(String operationName) {
             this.operationName = operationName;
             return this;
         }
 
+        /**
+         * @param attributes to set as tags on server spans
+         *  created by this interceptor
+         * @return this Builder configured to trace request attributes
+         */
         public Builder withTracedAttributes(ServerRequestAttribute... attributes) {
             this.tracedAttributes = new HashSet<ServerRequestAttribute>(Arrays.asList(attributes));
             return this;
         }
 
+        /**
+         * Logs streaming events to server spans.
+         * @return this Builder configured to log streaming events
+         */
         public Builder withStreaming() {
             this.streaming = true;
             return this;
         }
 
+        /**
+         * Logs all request lifecycle events to server spans.
+         * @return this Builder configured to be verbose
+         */
         public Builder withVerbosity() {
             this.verbose = true;
             return this;
         }
 
+        /**
+         * @return a ServerTracingInterceptor with this Builder's configuration
+         */
         public ServerTracingInterceptor build() {
-            return new ServerTracingInterceptor(this.tracer, this.operationName, this.streaming, this.verbose, this.tracedAttributes);
+            return new ServerTracingInterceptor(this.tracer, this.operationName, 
+                this.streaming, this.verbose, this.tracedAttributes);
         }
     }
 }    

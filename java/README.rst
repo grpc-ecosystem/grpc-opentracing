@@ -131,6 +131,49 @@ A `ClientTracingInterceptor` also has default settings, which you can override b
             ClientRequestAttribute.HEADERS)
         .build();
 
+====================
+Current Span Context
+====================
+
+In your server request handler, you can access the current active span for that request by calling
+
+.. code-block:: java
+
+    Span span = OpenTracingContextKey.activeSpan();
+
+This is useful if you want to manually set tags on the span, log important events, or create a new child span for internal units of work. You can actually use this key to wrap these internal units of work with a new context that has a user-defined active span.
+
+For example:
+
+.. code-block:: java
+
+    Tracer tracer = someOpenTracingTracer;
+
+    // some unit of internal work that you want to trace
+    Runnable internalWork = new Runnable() {
+        public void run() {
+            // do some work
+        }
+    } 
+
+    // get the active span 
+    Span activeSpan = OpenTracingContextKey.activeSpan();
+
+    // create a child span to represent the internal work
+    Span childSpan = tracer.buildSpan("internal-work").asChildOf(activeSpan).start();
+
+    // define a new context with childSpan as the active span
+    Context contextWithChildSpan = Context.current().withValue(OpenTracingContextKey.get(), childSpan);
+
+    // wrap the internal work with this new context so that the active span in the scope 
+    // of internalWork is childSpan
+    Runnable tracedInternalWork = contextWithChildSpan.wrap(internalWork)
+    tracedInternalWork.run()
+
+    // make sure to finish any manually created spans!
+    childSpan.finish();
+
+
 ===================================
 Integrating with Other Interceptors
 ===================================
