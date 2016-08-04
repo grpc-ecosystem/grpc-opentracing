@@ -26,8 +26,6 @@ This package is available on Maven Central and can be added to your project as f
 	
 	compile 'io.opentracing.contrib.grpc:grpc-opentracing:0.1.0'
 
-**Note:** This package was developed using grpc-java v1.0.0-pre1.
-
 ==========
 Quickstart
 ========== 
@@ -94,7 +92,7 @@ A `ServerTracingInterceptor` uses default settings, which you can override by cr
 - `withOperationName(String operationName)`: Sets the operation name for all spans created for the intercepted service. Default is the name of the RPC method.
 - `withStreaming()`: Logs to the server span whenever a message is received.
 - `withVerbosity()`: Logs to the server span additional events, such as message received, half close (client finished sending messages), and call complete. Default only logs if a call is cancelled.  
-- `withTracedAttributes(ServerRequestAttribute... attrs)`: Sets tags on the server span in case you want to track information about the RPC call. See `ServerRequestAttribute.java`_ for a list of traceable request attributes.
+- `withTracedAttributes(ServerRequestAttribute... attrs)`: Sets tags on the server span in case you want to track information about the RPC call. See ServerRequestAttribute.java for a list of traceable request attributes.
 
 **Example**:
 
@@ -118,7 +116,7 @@ A `ClientTracingInterceptor` also has default settings, which you can override b
 - `withOperationName(String operationName)`: Sets the operation name for all spans created for this intercepted client. Default is the name of the RPC method.
 - `withStreaming()`: Logs to the client span whenever a message is sent or a response is received.
 - `withVerbosity()`: Logs to the client span additional events, such as call started, message sent, half close (client finished sending messages), response received, and call complete. Default only logs if a call is cancelled.  
-- `withTracedAttributes(ClientRequestAttribute... attrs)`: Sets tags on the client span in case you want to track information about the RPC call. See `ClientRequestAttribute.java`_ for a list of traceable request attributes.
+- `withTracedAttributes(ClientRequestAttribute... attrs)`: Sets tags on the client span in case you want to track information about the RPC call. See ClientRequestAttribute.java for a list of traceable request attributes.
 
 **Example**:
 
