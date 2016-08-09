@@ -230,15 +230,6 @@ To alter the operation name, you need to add an implementation of the interface 
         .with....
         .build()
 
-**Java 8**
-
-If you're using Java 8, you can use a lambda functions instead of implementing OperationNameConstructor as follows:
-
-.. code-block::
-
-    .withOperationName((MethodDescriptor method) 
-        -> "your-prefix" + method.getFullMethodName())
-
 .. _semantics: http://opentracing.io/spec/#operation-names
 
 ===================================
