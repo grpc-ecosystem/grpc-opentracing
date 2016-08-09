@@ -12,6 +12,7 @@ import io.grpc.ServerServiceDefinition;
 import io.grpc.ForwardingServerCallListener;
 
 import io.opentracing.contrib.grpc.OpenTracingContextKey;
+import io.opentracing.contrib.grpc.OperationNameConstructor;
 import io.opentracing.contrib.grpc.ServerRequestAttribute;
 import io.opentracing.propagation.Format;
 import io.opentracing.propagation.TextMapExtractAdapter;
@@ -33,7 +34,7 @@ import java.util.Arrays;
 public class ServerTracingInterceptor implements ServerInterceptor {
     
     private final Tracer tracer;
-    private final String operationName;
+    private final OperationNameConstructor operationNameConstructor;
     private final boolean streaming;
     private final boolean verbose;
     private final Set<ServerRequestAttribute> tracedAttributes; 
@@ -43,16 +44,16 @@ public class ServerTracingInterceptor implements ServerInterceptor {
      */
     public ServerTracingInterceptor(Tracer tracer) {
         this.tracer = tracer;
-        this.operationName = "";
+        this.operationNameConstructor = OperationNameConstructor.NOOP;
         this.streaming = false;
         this.verbose = false;
         this.tracedAttributes = new HashSet<ServerRequestAttribute>();
     }
 
-    private ServerTracingInterceptor(Tracer tracer, String operationName, boolean streaming,
+    private ServerTracingInterceptor(Tracer tracer, OperationNameConstructor operationNameConstructor, boolean streaming,
         boolean verbose, Set<ServerRequestAttribute> tracedAttributes) {
         this.tracer = tracer;
-        this.operationName = operationName;
+        this.operationNameConstructor = operationNameConstructor;
         this.streaming = streaming;
         this.verbose = verbose;
         this.tracedAttributes = tracedAttributes;
@@ -84,27 +85,22 @@ public class ServerTracingInterceptor implements ServerInterceptor {
             headerMap.put(key, value);
         }
 
-        final String operationName;
-        if (this.operationName.equals("")) {
-            operationName = call.getMethodDescriptor().getFullMethodName();            
-        } else {
-            operationName = this.operationName;
-        }
+        final String operationName = operationNameConstructor.constructOperationName(call.getMethodDescriptor().getFullMethodName());
         final Span span = getSpanFromHeaders(headerMap, operationName);
 
         for (ServerRequestAttribute attr : this.tracedAttributes) {
             switch (attr) {
                 case METHOD_TYPE:
-                    span.setTag("Method Type", call.getMethodDescriptor().getType().toString());
+                    span.setTag("grpc.method_type", call.getMethodDescriptor().getType().toString());
                     break;
                 case METHOD_NAME:
-                    span.setTag("Method Name", call.getMethodDescriptor().getFullMethodName());
+                    span.setTag("grpc.method_name", call.getMethodDescriptor().getFullMethodName());
                     break;
                 case CALL_ATTRIBUTES:
-                    span.setTag("Call Attributes", call.attributes().toString());
+                    span.setTag("grpc.call_attributes", call.attributes().toString());
                     break;
                 case HEADERS:
-                    span.setTag("Headers", headers.toString());
+                    span.setTag("grpc.headers", headers.toString());
                     break;
             }
         }
@@ -169,7 +165,7 @@ public class ServerTracingInterceptor implements ServerInterceptor {
      */
     public static class Builder {
         private final Tracer tracer;
-        private String operationName;
+        private OperationNameConstructor operationNameConstructor;
         private boolean streaming;
         private boolean verbose;
         private Set<ServerRequestAttribute> tracedAttributes;
@@ -180,7 +176,7 @@ public class ServerTracingInterceptor implements ServerInterceptor {
          */
         public Builder(Tracer tracer) {
             this.tracer = tracer;
-            this.operationName = "";
+            this.operationNameConstructor = OperationNameConstructor.NOOP;
             this.streaming = false;
             this.verbose = false;
             this.tracedAttributes = new HashSet<ServerRequestAttribute>();
@@ -190,8 +186,8 @@ public class ServerTracingInterceptor implements ServerInterceptor {
          * @param operationName for all spans created by this interceptor
          * @return this Builder with configured operation name
          */
-        public Builder withOperationName(String operationName) {
-            this.operationName = operationName;
+        public Builder withOperationName(OperationNameConstructor operationNameConstructor) {
+            this.operationNameConstructor = operationNameConstructor;
             return this;
         }
 
@@ -227,7 +223,7 @@ public class ServerTracingInterceptor implements ServerInterceptor {
          * @return a ServerTracingInterceptor with this Builder's configuration
          */
         public ServerTracingInterceptor build() {
-            return new ServerTracingInterceptor(this.tracer, this.operationName, 
+            return new ServerTracingInterceptor(this.tracer, this.operationNameConstructor, 
                 this.streaming, this.verbose, this.tracedAttributes);
         }
     }

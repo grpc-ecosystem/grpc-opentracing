@@ -10,7 +10,7 @@ As core services and libraries adopt OpenTracing, the application builder is no 
 Further Information
 *******************
 
-If you’re interested in learning more about the OpenTracing standard, `join the mailing list`_.
+If you’re interested in learning more about the OpenTracing standard, join the conversation on our `mailing list`_ or `Gitter`_.
 
 If you want to learn more about the underlying API for your platform, visit the `source code`_. 
 
@@ -18,5 +18,6 @@ If you would like to implement OpenTracing in your project and need help, feel f
 
 .. _The OpenTracing Project: http://opentracing.io/
 .. _source code: https://github.com/opentracing/
-.. _join the mailing list: http://opentracing.us13.list-manage.com/subscribe?u=180afe03860541dae59e84153&id=19117aa6cd
+.. _mailing list: http://opentracing.us13.list-manage.com/subscribe?u=180afe03860541dae59e84153&id=19117aa6cd
+.. _Gitter: https://gitter.im/opentracing/public
 .. _community@opentracing.io: community@opentracing.io

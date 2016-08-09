@@ -14,6 +14,7 @@ import io.grpc.MethodDescriptor;
 import io.grpc.Status;
 
 import io.opentracing.contrib.grpc.OpenTracingContextKey;
+import io.opentracing.contrib.grpc.OperationNameConstructor;
 import io.opentracing.contrib.grpc.ClientRequestAttribute;
 import io.opentracing.propagation.TextMap;
 import io.opentracing.propagation.Format;
@@ -21,6 +22,7 @@ import io.opentracing.Span;
 import io.opentracing.Tracer;
 
 import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.HashSet;
@@ -33,7 +35,7 @@ import javax.annotation.Nullable;
 public class ClientTracingInterceptor implements ClientInterceptor {
     
     private final Tracer tracer;
-    private final String operationName;
+    private final OperationNameConstructor operationNameConstructor;
     private final boolean streaming;
     private final boolean verbose;
     private final Set<ClientRequestAttribute> tracedAttributes;
@@ -43,16 +45,16 @@ public class ClientTracingInterceptor implements ClientInterceptor {
      */
     public ClientTracingInterceptor(Tracer tracer) {
         this.tracer = tracer;
-        this.operationName = "";
+        this.operationNameConstructor = OperationNameConstructor.NOOP;
         this.streaming = false;
         this.verbose = false;
         this.tracedAttributes = new HashSet<ClientRequestAttribute>();
     }
 
-    private ClientTracingInterceptor(Tracer tracer, String operationName, boolean streaming,
+    private ClientTracingInterceptor(Tracer tracer, OperationNameConstructor operationNameConstructor, boolean streaming,
         boolean verbose, Set<ClientRequestAttribute> tracedAttributes) {
         this.tracer = tracer;
-        this.operationName = operationName;
+        this.operationNameConstructor = operationNameConstructor;
         this.streaming = streaming;
         this.verbose = verbose;
         this.tracedAttributes = tracedAttributes;
@@ -72,58 +74,52 @@ public class ClientTracingInterceptor implements ClientInterceptor {
         CallOptions callOptions, 
         Channel next
     ) {
-        final String operationName;
-        if (this.operationName.equals("")) {
-            operationName = method.getFullMethodName();
-        } else {
-            operationName = this.operationName;
-        }
+        final String operationName = operationNameConstructor.constructOperationName(method.getFullMethodName());
 
         Span activeSpan = OpenTracingContextKey.activeSpan();
         final Span span = createSpanFromParent(activeSpan, operationName);
-        System.out.println("Started span " + span.toString());
 
         for (ClientRequestAttribute attr : this.tracedAttributes) {
             switch (attr) {
                 case AFFINITY:
                     if (callOptions.getAffinity() == null) {
-                        span.setTag("Affinity", "null");
+                        span.setTag("grpc.affinity", "null");
                     } else {
-                        span.setTag("Affinity", callOptions.getAffinity().toString());
+                        span.setTag("grpc.affinity", callOptions.getAffinity().toString());
                     }  
                     break;
                 case ALL_CALL_OPTIONS:
-                    span.setTag("Call Options", callOptions.toString());
+                    span.setTag("grpc.call_options", callOptions.toString());
                     break;
                 case AUTHORITY:
                     if (callOptions.getAuthority() == null) {
-                        span.setTag("Authority", "null");
+                        span.setTag("grpc.authority", "null");
                     } else {
-                        span.setTag("Authority", callOptions.getAuthority());                        
+                        span.setTag("grpc.authority", callOptions.getAuthority());                        
                     }
                     break;
                 case COMPRESSOR:
                     if (callOptions.getCompressor() == null) {
-                        span.setTag("Compressor", "null");
+                        span.setTag("grpc.compressor", "null");
                     } else {
-                        span.setTag("Compressor", callOptions.getCompressor());
+                        span.setTag("grpc.compressor", callOptions.getCompressor());
                     }
                     break;
                 case DEADLINE:
                     if (callOptions.getDeadline() == null) {
-                        span.setTag("Deadline", "null");
+                        span.setTag("grpc.deadline_millis", "null");
                     } else {
-                        span.setTag("Deadline", callOptions.getDeadline().toString());
+                        span.setTag("grpc.deadline_millis", callOptions.getDeadline().timeRemaining(TimeUnit.MILLISECONDS));
                     }
                     break;
                 case METHOD_NAME:
-                    span.setTag("Method Name", method.getFullMethodName());
+                    span.setTag("grpc.method_name", method.getFullMethodName());
                     break;
                 case METHOD_TYPE:
                     if (method.getType() == null) {
-                        span.setTag("Method Type", "null");
+                        span.setTag("grpc.method_type", "null");
                     } else {
-                        span.setTag("Method Type", method.getType().toString());
+                        span.setTag("grpc.method_type", method.getType().toString());
                     }
                     break;
             }
@@ -137,7 +133,7 @@ public class ClientTracingInterceptor implements ClientInterceptor {
                     span.log("Started call", null);
                 }
                 if (tracedAttributes.contains(ClientRequestAttribute.HEADERS)) {
-                    span.setTag("Headers", headers.toString()); 
+                    span.setTag("grpc.headers", headers.toString()); 
                 }
 
                 tracer.inject(span.context(), Format.Builtin.HTTP_HEADERS, new TextMap() {
@@ -223,7 +219,7 @@ public class ClientTracingInterceptor implements ClientInterceptor {
     public static class Builder {
 
         private Tracer tracer;
-        private String operationName;
+        private OperationNameConstructor operationNameConstructor;
         private boolean streaming;
         private boolean verbose;
         private Set<ClientRequestAttribute> tracedAttributes;  
@@ -234,7 +230,7 @@ public class ClientTracingInterceptor implements ClientInterceptor {
          */
         public Builder(Tracer tracer) {
             this.tracer = tracer;
-            this.operationName = "";
+            this.operationNameConstructor = OperationNameConstructor.NOOP;
             this.streaming = false;
             this.verbose = false;
             this.tracedAttributes = new HashSet<ClientRequestAttribute>();
@@ -244,8 +240,8 @@ public class ClientTracingInterceptor implements ClientInterceptor {
          * @param operationName for all spans created by this interceptor
          * @return this Builder with configured operation name
          */
-        public Builder withOperationName(String operationName) {
-            this.operationName = operationName;
+        public Builder withOperationName(OperationNameConstructor operationNameConstructor) {
+            this.operationNameConstructor = operationNameConstructor;
             return this;
         } 
 
@@ -282,7 +278,7 @@ public class ClientTracingInterceptor implements ClientInterceptor {
          * @return a ClientTracingInterceptor with this Builder's configuration
          */
         public ClientTracingInterceptor build() {
-            return new ClientTracingInterceptor(this.tracer, this.operationName, 
+            return new ClientTracingInterceptor(this.tracer, this.operationNameConstructor, 
                 this.streaming, this.verbose, this.tracedAttributes);
         }
     
