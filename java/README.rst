@@ -96,7 +96,7 @@ Server Tracing
 
 A ``ServerTracingInterceptor`` uses default settings, which you can override by creating it using a ``ServerTracingInterceptor.Builder``.
 
-- ``withOperationName(OperationNameConstructor constructor)``: Define how the operation name is constructed for all spans created for the intercepted service. Default sets the operation name as the name of the RPC method. More details `below`_.
+- ``withOperationName(OperationNameConstructor constructor)``: Define how the operation name is constructed for all spans created for the intercepted service. Default sets the operation name as the name of the RPC method. More details in the `Operation Name`_ section.
 - ``withStreaming()``: Logs to the server span whenever a message is received.
 - ``withVerbosity()``: Logs to the server span additional events, such as message received, half close (client finished sending messages), and call complete. Default only logs if a call is cancelled.  
 - ``withTracedAttributes(ServerRequestAttribute... attrs)``: Sets tags on the server span in case you want to track information about the RPC call. See ServerRequestAttribute.java for a list of traceable request attributes.
@@ -125,7 +125,8 @@ Client Tracing
 
 A ``ClientTracingInterceptor`` also has default settings, which you can override by creating it using a ``ServerTracingInterceptor.Builder``.
 
-- ``withOperationName(String operationName)``: Define how the operation name is constructed for all spans created for this intercepted client. Default is the name of the RPC method. More details `below`_.
+- ``withOperationName(String operationName)``: Define how the operation name is constructed for all spans created for this intercepted client. Default is the name of the RPC method. More details in the `Operation Name`_ section.
+- ``withActiveSpanSource(ActiveSpanSource activeSpanSource)``: Define how to extract the current active span, if any. This is needed if you want your client to continue a trace instead of starting a new one. More details in the `Active Span Source`_ section.
 - ``withStreaming()``: Logs to the client span whenever a message is sent or a response is received.
 - ``withVerbosity()``: Logs to the client span additional events, such as call started, message sent, half close (client finished sending messages), response received, and call complete. Default only logs if a call is cancelled.  
 - ``withTracedAttributes(ClientRequestAttribute... attrs)``: Sets tags on the client span in case you want to track information about the RPC call. See ClientRequestAttribute.java for a list of traceable request attributes.
@@ -133,6 +134,8 @@ A ``ClientTracingInterceptor`` also has default settings, which you can override
 **Example**:
 
 .. code-block:: java
+
+    import io.opentracing.Span;
 
     ClientTracingInterceptor tracingInterceptor = new ClientTracingInterceptor
         .Builder(tracer)
@@ -144,11 +147,18 @@ A ``ClientTracingInterceptor`` also has default settings, which you can override
                 // construct some operation name from the method descriptor
             }
         })
+        .withActiveSpanSource(new ActiveSpanSource() {
+            @Override
+            public Span getActiveSpan() {
+                // implement how to get the current active span
+            }
+        })
         .withTracingAttributes(ClientRequestAttribute.ALL_CALL_OPTIONS,
             ClientRequestAttribute.HEADERS)
         .build();
 
-.. _below: `Operation Names`_
+.. _Operation Name: `Operation Names`_
+.. _Active Span Source: `Active Span Sources`_
 
 ====================
 Current Span Context
@@ -218,7 +228,7 @@ The default operation name for any span is the RPC method name (``io.grpc.Method
 
 To alter the operation name, you need to add an implementation of the interface ``OperationNameConstructor`` to the ``ClientTracingInterceptor.Builder`` or ``ServerTracingInterceptor.Builder``. For example, if you want to add a prefix to the default operation name of your ClientInterceptor, your code would look like this:
 
-.. code-block::
+.. code-block:: java
 
     ClientTracingInterceptor interceptor = ClientTracingInterceptor.Builder ...
         .withOperationName(new OperationNameConstructor() {
@@ -231,6 +241,35 @@ To alter the operation name, you need to add an implementation of the interface 
         .build()
 
 .. _semantics: http://opentracing.io/spec/#operation-names
+
+===================
+Active Span Sources
+===================
+
+If you want your client to continue a trace rather than starting a new one, then you can tell your ``ClientTracingInterceptor`` how to extract the current active span by building it with your own implementation of the interface ``ActiveSpanSource``. This interface has one method, ``getActiveSpan``, in which you will define how to access the current active span. 
+
+For example, if you're creating the client in an environment that has the active span stored in a global dictionary-style context under ``OPENTRACING_SPAN_KEY``, then you could configure your Interceptor as follows:
+
+.. code-block:: java
+
+    import io.opentracing.Span;
+
+    ClientTracingInterceptor interceptor = new ClientTracingInterceptor
+        .Builder(tracer)
+        ...
+        .withActiveSpanSource(new ActiveSpanSource() {
+            @Override
+            public Span getActiveSpan() {
+                return Context.get(OPENTRACING_SPAN_KEY);
+            }
+        })
+        ...
+        .build();
+
+We also provide two built-in implementations:
+
+* ``ActiveSpanSource.GRPC`` uses the current ``io.grpc.Context`` and returns the active span for ``OpenTracingContextKey``. This is the default active span source.
+* ``ActiveSpanSource.NONE`` always returns null as the active span, which means the client will always start a new trace
 
 ===================================
 Integrating with Other Interceptors

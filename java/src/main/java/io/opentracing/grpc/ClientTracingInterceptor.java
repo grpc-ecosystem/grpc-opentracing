@@ -39,6 +39,7 @@ public class ClientTracingInterceptor implements ClientInterceptor {
     private final boolean streaming;
     private final boolean verbose;
     private final Set<ClientRequestAttribute> tracedAttributes;
+    private final ActiveSpanSource activeSpanSource;
 
     /**
      * @param tracer to use to trace requests
@@ -49,15 +50,17 @@ public class ClientTracingInterceptor implements ClientInterceptor {
         this.streaming = false;
         this.verbose = false;
         this.tracedAttributes = new HashSet<ClientRequestAttribute>();
+        this.activeSpanSource = ActiveSpanSource.GRPC;
     }
 
     private ClientTracingInterceptor(Tracer tracer, OperationNameConstructor operationNameConstructor, boolean streaming,
-        boolean verbose, Set<ClientRequestAttribute> tracedAttributes) {
+        boolean verbose, Set<ClientRequestAttribute> tracedAttributes, ActiveSpanSource activeSpanSource) {
         this.tracer = tracer;
         this.operationNameConstructor = operationNameConstructor;
         this.streaming = streaming;
         this.verbose = verbose;
         this.tracedAttributes = tracedAttributes;
+        this.activeSpanSource = activeSpanSource;
     }
 
     /**
@@ -76,7 +79,7 @@ public class ClientTracingInterceptor implements ClientInterceptor {
     ) {
         final String operationName = operationNameConstructor.constructOperationName(method);
 
-        Span activeSpan = OpenTracingContextKey.activeSpan();
+        Span activeSpan = this.activeSpanSource.getActiveSpan();
         final Span span = createSpanFromParent(activeSpan, operationName);
 
         for (ClientRequestAttribute attr : this.tracedAttributes) {
@@ -222,7 +225,8 @@ public class ClientTracingInterceptor implements ClientInterceptor {
         private OperationNameConstructor operationNameConstructor;
         private boolean streaming;
         private boolean verbose;
-        private Set<ClientRequestAttribute> tracedAttributes;  
+        private Set<ClientRequestAttribute> tracedAttributes;
+        private ActiveSpanSource activeSpanSource;  
 
         /**
          * @param tracer to use for this interceptor
@@ -234,6 +238,7 @@ public class ClientTracingInterceptor implements ClientInterceptor {
             this.streaming = false;
             this.verbose = false;
             this.tracedAttributes = new HashSet<ClientRequestAttribute>();
+            this.activeSpanSource = ActiveSpanSource.GRPC;
         } 
 
         /**
@@ -275,12 +280,22 @@ public class ClientTracingInterceptor implements ClientInterceptor {
         }
 
         /**
+         * @param activeSpanSource that provides a method of getting the 
+         *  active span before the client call
+         * @return this Builder configured to start client span as children 
+         *  of the span returned by activeSpanSource.getActiveSpan()
+         */
+        public Builder withActiveSpanSource(ActiveSpanSource activeSpanSource) {
+            this.activeSpanSource = activeSpanSource;
+            return this;
+        }
+
+        /**
          * @return a ClientTracingInterceptor with this Builder's configuration
          */
         public ClientTracingInterceptor build() {
             return new ClientTracingInterceptor(this.tracer, this.operationNameConstructor, 
-                this.streaming, this.verbose, this.tracedAttributes);
+                this.streaming, this.verbose, this.tracedAttributes, this.activeSpanSource);
         }
-    
     }
 }
