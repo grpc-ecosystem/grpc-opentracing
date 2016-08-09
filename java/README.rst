@@ -109,7 +109,12 @@ A ``ServerTracingInterceptor`` uses default settings, which you can override by 
         .Builder(tracer)
         .withStreaming()
         .withVerbosity()
-        .withOperationName("service-name")
+        .withOperationName(new OperationNameConstructor() {
+            @Override
+            public <ReqT, RespT> String constructOperationName(MethodDescriptor<ReqT, RespT> method) {
+                // construct some operation name from the method descriptor
+            }
+        })
         .withTracedAttributes(ServerRequestAttribute.HEADERS, 
             ServerRequestAttribute.METHOD_TYPE)
         .build();
@@ -133,7 +138,12 @@ A ``ClientTracingInterceptor`` also has default settings, which you can override
         .Builder(tracer)
         .withStreaming()
         .withVerbosity()
-        .withOperationName("client-name")
+        .withOperationName(new OperationNameConstructor() {
+            @Override
+            public <ReqT, RespT> String constructOperationName(MethodDescriptor<ReqT, RespT> method) {
+                // construct some operation name from the method descriptor
+            }
+        })
         .withTracingAttributes(ClientRequestAttribute.ALL_CALL_OPTIONS,
             ClientRequestAttribute.HEADERS)
         .build();
@@ -213,8 +223,8 @@ To alter the operation name, you need to add an implementation of the interface 
     ClientTracingInterceptor interceptor = ClientTracingInterceptor.Builder ...
         .withOperationName(new OperationNameConstructor() {
             @Override
-            public String constructOperationName(String methodName) {
-                return "your-prefix" + methodName;
+            public <ReqT, RespT> String constructOperationName(MethodDescriptor<ReqT, RespT> method) {
+                return "your-prefix" + method.getFullMethodName();
             }
         })
         .with....
@@ -226,7 +236,8 @@ If you're using Java 8, you can use a lambda functions instead of implementing O
 
 .. code-block::
 
-    .withOperationName((String methodName) -> "your-prefix" + methodName)
+    .withOperationName((MethodDescriptor method) 
+        -> "your-prefix" + method.getFullMethodName())
 
 .. _semantics: http://opentracing.io/spec/#operation-names
 

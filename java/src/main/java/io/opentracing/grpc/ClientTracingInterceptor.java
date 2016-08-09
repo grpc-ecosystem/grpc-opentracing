@@ -45,7 +45,7 @@ public class ClientTracingInterceptor implements ClientInterceptor {
      */
     public ClientTracingInterceptor(Tracer tracer) {
         this.tracer = tracer;
-        this.operationNameConstructor = OperationNameConstructor.NOOP;
+        this.operationNameConstructor = OperationNameConstructor.DEFAULT;
         this.streaming = false;
         this.verbose = false;
         this.tracedAttributes = new HashSet<ClientRequestAttribute>();
@@ -74,7 +74,7 @@ public class ClientTracingInterceptor implements ClientInterceptor {
         CallOptions callOptions, 
         Channel next
     ) {
-        final String operationName = operationNameConstructor.constructOperationName(method.getFullMethodName());
+        final String operationName = operationNameConstructor.constructOperationName(method);
 
         Span activeSpan = OpenTracingContextKey.activeSpan();
         final Span span = createSpanFromParent(activeSpan, operationName);
@@ -230,7 +230,7 @@ public class ClientTracingInterceptor implements ClientInterceptor {
          */
         public Builder(Tracer tracer) {
             this.tracer = tracer;
-            this.operationNameConstructor = OperationNameConstructor.NOOP;
+            this.operationNameConstructor = OperationNameConstructor.DEFAULT;
             this.streaming = false;
             this.verbose = false;
             this.tracedAttributes = new HashSet<ClientRequestAttribute>();

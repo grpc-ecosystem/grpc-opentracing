@@ -44,7 +44,7 @@ public class ServerTracingInterceptor implements ServerInterceptor {
      */
     public ServerTracingInterceptor(Tracer tracer) {
         this.tracer = tracer;
-        this.operationNameConstructor = OperationNameConstructor.NOOP;
+        this.operationNameConstructor = OperationNameConstructor.DEFAULT;
         this.streaming = false;
         this.verbose = false;
         this.tracedAttributes = new HashSet<ServerRequestAttribute>();
@@ -85,7 +85,7 @@ public class ServerTracingInterceptor implements ServerInterceptor {
             headerMap.put(key, value);
         }
 
-        final String operationName = operationNameConstructor.constructOperationName(call.getMethodDescriptor().getFullMethodName());
+        final String operationName = operationNameConstructor.constructOperationName(call.getMethodDescriptor());
         final Span span = getSpanFromHeaders(headerMap, operationName);
 
         for (ServerRequestAttribute attr : this.tracedAttributes) {
@@ -176,7 +176,7 @@ public class ServerTracingInterceptor implements ServerInterceptor {
          */
         public Builder(Tracer tracer) {
             this.tracer = tracer;
-            this.operationNameConstructor = OperationNameConstructor.NOOP;
+            this.operationNameConstructor = OperationNameConstructor.DEFAULT;
             this.streaming = false;
             this.verbose = false;
             this.tracedAttributes = new HashSet<ServerRequestAttribute>();
