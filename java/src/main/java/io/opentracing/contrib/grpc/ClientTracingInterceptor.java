@@ -1,36 +1,31 @@
 package io.opentracing.contrib.grpc;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
+import javax.annotation.Nullable;
+
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
-import io.grpc.ClientCall.Listener;
 import io.grpc.ClientInterceptor;
 import io.grpc.ClientInterceptors;
-import io.grpc.Context;
 import io.grpc.ForwardingClientCall;
 import io.grpc.ForwardingClientCallListener;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
-
-import io.opentracing.contrib.grpc.OpenTracingContextKey;
-import io.opentracing.contrib.grpc.OperationNameConstructor;
-import io.opentracing.contrib.grpc.ClientRequestAttribute;
-import io.opentracing.propagation.TextMap;
-import io.opentracing.propagation.Format;
 import io.opentracing.Span;
 import io.opentracing.Tracer;
-
-import java.util.Arrays;
-import java.util.concurrent.TimeUnit;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.HashSet;
-import java.util.Set;
-import javax.annotation.Nullable;
+import io.opentracing.propagation.Format;
+import io.opentracing.propagation.TextMap;
 
 /** 
- * An interceptor that applies tracing via OpenTracing to all client requests. 
+ * An intercepter that applies tracing via OpenTracing to all client requests. 
  */ 
 public class ClientTracingInterceptor implements ClientInterceptor {
     
@@ -64,8 +59,9 @@ public class ClientTracingInterceptor implements ClientInterceptor {
     }
 
     /**
-     * Use this interceptor to trace all requests made by this client channel.
+     * Use this intercepter to trace all requests made by this client channel.
      * @param channel to be traced
+     * @return intercepted channel
      */ 
     public Channel intercept(Channel channel) {
         return ClientInterceptors.intercept(channel, this);
@@ -125,6 +121,8 @@ public class ClientTracingInterceptor implements ClientInterceptor {
                         span.setTag("grpc.method_type", method.getType().toString());
                     }
                     break;
+                case HEADERS:
+                	break;
             }
         }
 
@@ -141,22 +139,24 @@ public class ClientTracingInterceptor implements ClientInterceptor {
 
                 tracer.inject(span.context(), Format.Builtin.HTTP_HEADERS, new TextMap() {
                     @Override
-                    public Iterator<Map.Entry<String, String>> getEntries() {
-                        throw new UnsupportedOperationException(
-                            "TextMapInjectAdapter should only be used with Tracer.inject()");
-                    }
-                    @Override
                     public void put(String key, String value) {
                         Metadata.Key<String> headerKey = Metadata.Key.of(key, Metadata.ASCII_STRING_MARSHALLER);
                         headers.put(headerKey, value);
                     }
-                });                    
+					@Override
+					public Iterator<Entry<String, String>> iterator() {
+						throw new UnsupportedOperationException(
+								"TextMapInjectAdapter should only be used with Tracer.inject()");
+					}
+                });
+
                 Listener<RespT> tracingResponseListener = new ForwardingClientCallListener
                     .SimpleForwardingClientCallListener<RespT>(responseListener) {
 
                     @Override
                     public void onHeaders(Metadata headers) {
                         if (verbose) { span.log("Response headers received", headers.toString()); }
+                        delegate().onHeaders(headers);
                     }
 
                     @Override
@@ -229,8 +229,8 @@ public class ClientTracingInterceptor implements ClientInterceptor {
         private ActiveSpanSource activeSpanSource;  
 
         /**
-         * @param tracer to use for this interceptor
-         * @return a Builder with default configuration
+         * @param tracer to use for this intercepter
+         * Creates a Builder with default configuration
          */
         public Builder(Tracer tracer) {
             this.tracer = tracer;
@@ -242,7 +242,7 @@ public class ClientTracingInterceptor implements ClientInterceptor {
         } 
 
         /**
-         * @param operationName for all spans created by this interceptor
+         * @param operationNameConstructor to name all spans created by this intercepter
          * @return this Builder with configured operation name
          */
         public Builder withOperationName(OperationNameConstructor operationNameConstructor) {
@@ -261,7 +261,7 @@ public class ClientTracingInterceptor implements ClientInterceptor {
 
         /**
          * @param tracedAttributes to set as tags on client spans
-         *  created by this interceptor
+         *  created by this intercepter
          * @return this Builder configured to trace attributes
          */
         public Builder withTracedAttributes(ClientRequestAttribute... tracedAttributes) {
@@ -271,7 +271,7 @@ public class ClientTracingInterceptor implements ClientInterceptor {
         }
 
         /**
-         * Logs all request lifecycle events to client spans.
+         * Logs all request life-cycle events to client spans.
          * @return this Builder configured to be verbose
          */
         public Builder withVerbosity() {

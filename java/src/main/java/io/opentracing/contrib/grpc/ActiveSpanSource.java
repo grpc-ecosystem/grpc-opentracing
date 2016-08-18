@@ -9,7 +9,7 @@ import io.opentracing.contrib.grpc.OpenTracingContextKey;
 public interface ActiveSpanSource {
 
     /**
-     * @return ActiveSpanSource implementation that always returns
+     * ActiveSpanSource implementation that always returns
      *  null as the active span
      */
     public static ActiveSpanSource NONE = new ActiveSpanSource() {
@@ -20,7 +20,7 @@ public interface ActiveSpanSource {
     };
     
     /**
-     * @return ActiveSpanSource implementation that returns the
+     * ActiveSpanSource implementation that returns the
      *  current span stored in the GRPC context under
      *  {@link OpenTracingContextKey}
      */

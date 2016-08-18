@@ -97,7 +97,7 @@ Server Tracing
 A ``ServerTracingInterceptor`` uses default settings, which you can override by creating it using a ``ServerTracingInterceptor.Builder``.
 
 - ``withOperationName(OperationNameConstructor constructor)``: Define how the operation name is constructed for all spans created for the intercepted service. Default sets the operation name as the name of the RPC method. More details in the `Operation Name`_ section.
-- ``withStreaming()``: Logs to the server span whenever a message is received.
+- ``withStreaming()``: Logs to the server span whenever a message is received. *Note:* This package supports streaming but has not been rigorously tested. If you come across any issues, please let us know.
 - ``withVerbosity()``: Logs to the server span additional events, such as message received, half close (client finished sending messages), and call complete. Default only logs if a call is cancelled.  
 - ``withTracedAttributes(ServerRequestAttribute... attrs)``: Sets tags on the server span in case you want to track information about the RPC call. See ServerRequestAttribute.java for a list of traceable request attributes.
 
@@ -127,7 +127,7 @@ A ``ClientTracingInterceptor`` also has default settings, which you can override
 
 - ``withOperationName(String operationName)``: Define how the operation name is constructed for all spans created for this intercepted client. Default is the name of the RPC method. More details in the `Operation Name`_ section.
 - ``withActiveSpanSource(ActiveSpanSource activeSpanSource)``: Define how to extract the current active span, if any. This is needed if you want your client to continue a trace instead of starting a new one. More details in the `Active Span Source`_ section.
-- ``withStreaming()``: Logs to the client span whenever a message is sent or a response is received.
+- ``withStreaming()``: Logs to the client span whenever a message is sent or a response is received. *Note:* This package supports streaming but has not been rigorously tested. If you come across any issues, please let us know.
 - ``withVerbosity()``: Logs to the client span additional events, such as call started, message sent, half close (client finished sending messages), response received, and call complete. Default only logs if a call is cancelled.  
 - ``withTracedAttributes(ClientRequestAttribute... attrs)``: Sets tags on the client span in case you want to track information about the RPC call. See ClientRequestAttribute.java for a list of traceable request attributes.
 

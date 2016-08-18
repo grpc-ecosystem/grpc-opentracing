@@ -1,87 +1,106 @@
 description = "grpc-java: OpenTracing"
 
 group = "io.opentracing.contrib.grpc"
-// archivesBaseName = "grpc-opentracing"
 version = '0.1.0'
 
-apply plugin: "java"
+apply plugin: 'java'
 apply plugin: 'maven'
 apply plugin: 'signing'
 
+sourceSets {
+	main {
+		java {
+			srcDirs = ['src/main/java']
+		}
+	}
+	test {
+		java {
+			srcDirs = ['src/test/java', 'src/generated']
+		}
+	}
+}
 
-// task javadocJar(type: Jar) {
-//     classifier = 'javadoc'
-//     from javadoc
-// }
+task javadocJar(type: Jar) {
+	classifier = 'javadoc'
+	from javadoc
+}
 
-// task sourcesJar(type: Jar) {
-//     classifier = 'sources'
-//     from sourceSets.main.allSource
-// }
+task sourcesJar(type: Jar) {
+	classifier = 'sources'
+	from sourceSets.main.allSource
+}
 
-// artifacts {
-//     archives javadocJar, sourcesJar
-// }
+artifacts {
+	archives jar
 
-// signing {
-//     sign configurations.archives
-// }
+	archives javadocJar
+	archives sourcesJar
+}
+
+signing {
+	sign configurations.archives
+}
 
 repositories {
-    mavenCentral()
-    mavenLocal()
+	mavenCentral()
 }
 
 jar {
-    baseName 'grpc-opentracing'
-    version = '0.1.0'
+	baseName 'grpc-opentracing'
+	version = '0.1.0'
 }
 
 dependencies {
-    compile 'io.grpc:grpc-core:1.0.0-pre1'
-    compile 'io.opentracing:opentracing-api:0.10.0'
+	compile 'io.grpc:grpc-core:1.0.0-pre1'
+	compile 'io.opentracing:opentracing-api:0.14.0'
+	testCompile 'io.opentracing:opentracing-mock:0.14.0'
+	testCompile 'io.grpc:grpc-protobuf:1.0.0-pre1'
+	testCompile 'io.grpc:grpc-netty:1.0.0-pre1'
+	testCompile 'io.grpc:grpc-stub:1.0.0-pre1'
+	testCompile 'junit:junit:4.12'
 }
 
-// uploadArchives {
-//   repositories {
-//     mavenDeployer {
-//       beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+uploadArchives {
+	repositories {
+		mavenDeployer {
+			beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
 
-//       repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-//         authentication(userName: ossrhUsername, password: ossrhPassword)
-//       }
+			repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+				authentication(userName: sonatypeUsername, password: sonatypePassword)
+			}
 
-//       snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
-//         authentication(userName: ossrhUsername, password: ossrhPassword)
-//       }
+			snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
+				authentication(userName: sonatypeUsername, password: sonatypePassword)
+			}
 
-//       pom.project {
-//         name 'grpc-opentracing'
-//         packaging 'jar'
-//         // optionally artifactId can be defined here 
-//         description 'Provides support for integrating OpenTracing in grpc clients and servers.'
-//         url 'http://www.github.com/grpc-ecosystem/grpc-opentracing'
+			pom.project {
+				name 'grpc-opentracing'
+				packaging 'jar'
+				// optionally artifactId can be defined here 
+				description 'Provides support for integrating OpenTracing in grpc clients and servers.'
+				url 'http://www.github.com/grpc-ecosystem/grpc-opentracing'
 
-//         scm {
-//           connection 'scm:svn:http://foo.googlecode.com/svn/trunk/'
-//           developerConnection 'scm:svn:https://foo.googlecode.com/svn/trunk/'
-//           url 'http://foo.googlecode.com/svn/trunk/'
-//         }
+				scm {
+					url 'scm:git@github.com:grpc-ecosystem:grpc-opentracing.git'
+					connection 'scm:git@github.com:grpc-ecosystem/grpc-opentracing.git'
+					developerConnection 'scm:git@github.com:grpc-ecosystem/grpc-opentracing.git'
+				}
 
-//         licenses {
-//           license {
-//             name 'The Apache License, Version 2.0'
-//             url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-//           }
-//         }
+				licenses {
+					license {
+						name 'BSD-3'
+						url 'https://opensource.org/licenses/BSD-3-Clause'
+					}
+				}
 
-//         developers {
-//           developer {
-//             name 'Kathy Camenzind'
-//             email 'kcamenzind@lightstep.com'
-//           }
-//         }
-//       }
-//     }
-//   }
-// }
+				developers {
+					developer {
+						name 'Kathy Camenzind'
+						email 'kcamenzind@lightstep.com'
+					}
+				}
+		
+			}
+		}
+	}
+}

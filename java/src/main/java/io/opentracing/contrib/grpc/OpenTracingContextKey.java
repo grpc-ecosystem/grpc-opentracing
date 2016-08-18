@@ -12,7 +12,8 @@ import io.opentracing.Span;
  */
 public class OpenTracingContextKey {
     
-    private static final Context.Key<Span> key = Context.key("ot-active-span");
+    public static final String KEY_NAME = "ot-active-span";
+    private static final Context.Key<Span> key = Context.key(KEY_NAME);
 
     /**
      * @return the active span for the current request

@@ -21,14 +21,13 @@ import io.opentracing.SpanContext;
 import io.opentracing.Tracer;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.Arrays;
 
 /**
- * An interceptor that applies tracing via OpenTracing to all requests 
+ * An intercepter that applies tracing via OpenTracing to all requests 
  * to the server.
  */
 public class ServerTracingInterceptor implements ServerInterceptor {
@@ -61,6 +60,8 @@ public class ServerTracingInterceptor implements ServerInterceptor {
 
     /**
      * Add tracing to all requests made to this service.
+     * @param serviceDef of the service to intercept
+     * @return the serviceDef with a tracing interceptor
      */
     public ServerServiceDefinition intercept(ServerServiceDefinition serviceDef) {
         return ServerInterceptors.intercept(serviceDef, this);
@@ -68,6 +69,8 @@ public class ServerTracingInterceptor implements ServerInterceptor {
 
     /**
      * Add tracing to all requests made to this service.
+     * @param bindableService to intercept
+     * @return the serviceDef with a tracing interceptor
      */
     public ServerServiceDefinition intercept(BindableService bindableService) {
         return ServerInterceptors.intercept(bindableService, this);
@@ -171,8 +174,8 @@ public class ServerTracingInterceptor implements ServerInterceptor {
         private Set<ServerRequestAttribute> tracedAttributes;
 
         /**
-         * @param tracer to use for this interceptor
-         * @return a Builder with default configuration
+         * @param tracer to use for this intercepter
+         * Creates a Builder with default configuration
          */
         public Builder(Tracer tracer) {
             this.tracer = tracer;
@@ -183,7 +186,7 @@ public class ServerTracingInterceptor implements ServerInterceptor {
         }
 
         /**
-         * @param operationName for all spans created by this interceptor
+         * @param operationNameConstructor for all spans created by this intercepter
          * @return this Builder with configured operation name
          */
         public Builder withOperationName(OperationNameConstructor operationNameConstructor) {
@@ -193,7 +196,7 @@ public class ServerTracingInterceptor implements ServerInterceptor {
 
         /**
          * @param attributes to set as tags on server spans
-         *  created by this interceptor
+         *  created by this intercepter
          * @return this Builder configured to trace request attributes
          */
         public Builder withTracedAttributes(ServerRequestAttribute... attributes) {
@@ -211,7 +214,7 @@ public class ServerTracingInterceptor implements ServerInterceptor {
         }
 
         /**
-         * Logs all request lifecycle events to server spans.
+         * Logs all request life-cycle events to server spans.
          * @return this Builder configured to be verbose
          */
         public Builder withVerbosity() {
