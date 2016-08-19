@@ -1,4 +1,4 @@
-package io.opentracing.contrib.grpc;
+package io.opentracing.contrib;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -152,7 +152,7 @@ public class TracingInterceptorsTest {
 		TracedService service = new TracedService();
 		ServerTracingInterceptor tracingInterceptor = new ServerTracingInterceptor
 				.Builder(serviceTracer)
-				.withTracedAttributes(ServerRequestAttribute.values())
+				.withTracedAttributes(ServerTracingInterceptor.ServerRequestAttribute.values())
 				.build();
 		
 		try {
@@ -166,7 +166,8 @@ public class TracingInterceptorsTest {
 			assertEquals("span should have prefix", span.operationName(), "helloworld.Greeter/SayHello");
 			assertEquals("span should have no parents", span.parentId(), 0);
 			assertEquals("span should have no logs", span.logEntries().size(), 0);
-			assertEquals("span should have a tag for each traced attribute", ServerRequestAttribute.values().length, span.tags().size());
+			assertEquals("span should have a tag for each traced attribute", 
+					ServerTracingInterceptor.ServerRequestAttribute.values().length, span.tags().size());
 			assertFalse("span should have no baggage", span.context().baggageItems().iterator().hasNext());
 		} catch (Exception e) {
 			assertTrue(e.getMessage(), false);
@@ -321,7 +322,7 @@ public class TracingInterceptorsTest {
 		MockTracer clientTracer = new MockTracer();
 		ClientTracingInterceptor tracingInterceptor = new ClientTracingInterceptor
 				.Builder(clientTracer)
-				.withTracedAttributes(ClientRequestAttribute.values())
+				.withTracedAttributes(ClientTracingInterceptor.ClientRequestAttribute.values())
 				.build();
 		TracedClient client = new TracedClient("localhost", 50051, tracingInterceptor);
 				
@@ -336,7 +337,8 @@ public class TracingInterceptorsTest {
 			assertEquals("span should have prefix", span.operationName(), "helloworld.Greeter/SayHello");
 			assertEquals("span should have no parents", span.parentId(), 0);
 			assertEquals("span should have no logs", span.logEntries().size(), 0);
-			assertEquals("span should have tags for all client request attributes", ClientRequestAttribute.values().length, span.tags().size());
+			assertEquals("span should have tags for all client request attributes", 
+					ClientTracingInterceptor.ClientRequestAttribute.values().length, span.tags().size());
 			assertFalse("span should have no baggage", span.context().baggageItems().iterator().hasNext());
 		} catch (Exception e) {
 			assertTrue(e.getMessage(), false);

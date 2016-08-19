@@ -1,4 +1,4 @@
-package io.opentracing.contrib.grpc;
+package io.opentracing.contrib;
 
 import java.io.IOException;
 

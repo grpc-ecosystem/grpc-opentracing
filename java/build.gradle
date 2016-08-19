@@ -1,6 +1,6 @@
 description = "grpc-java: OpenTracing"
 
-group = "io.opentracing.contrib.grpc"
+group = "io.opentracing.contrib"
 version = '0.1.0'
 
 apply plugin: 'java'
@@ -15,7 +15,7 @@ sourceSets {
 	}
 	test {
 		java {
-			srcDirs = ['src/test/java', 'src/generated']
+			srcDirs = ['src/test/java', 'src/testgen']
 		}
 	}
 }

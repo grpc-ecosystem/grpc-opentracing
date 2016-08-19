@@ -1,4 +1,4 @@
-package io.opentracing.contrib.grpc;
+package io.opentracing.contrib;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -45,7 +45,7 @@ public class ClientTracingInterceptor implements ClientInterceptor {
         this.streaming = false;
         this.verbose = false;
         this.tracedAttributes = new HashSet<ClientRequestAttribute>();
-        this.activeSpanSource = ActiveSpanSource.GRPC;
+        this.activeSpanSource = ActiveSpanSource.GRPC_CONTEXT;
     }
 
     private ClientTracingInterceptor(Tracer tracer, OperationNameConstructor operationNameConstructor, boolean streaming,
@@ -238,7 +238,7 @@ public class ClientTracingInterceptor implements ClientInterceptor {
             this.streaming = false;
             this.verbose = false;
             this.tracedAttributes = new HashSet<ClientRequestAttribute>();
-            this.activeSpanSource = ActiveSpanSource.GRPC;
+            this.activeSpanSource = ActiveSpanSource.GRPC_CONTEXT;
         } 
 
         /**
@@ -297,5 +297,16 @@ public class ClientTracingInterceptor implements ClientInterceptor {
             return new ClientTracingInterceptor(this.tracer, this.operationNameConstructor, 
                 this.streaming, this.verbose, this.tracedAttributes, this.activeSpanSource);
         }
+    }
+
+    enum ClientRequestAttribute {
+        METHOD_TYPE,
+        METHOD_NAME,
+        DEADLINE,
+        COMPRESSOR,
+        AFFINITY,
+        AUTHORITY,
+        ALL_CALL_OPTIONS,
+        HEADERS
     }
 }

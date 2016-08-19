@@ -1,4 +1,4 @@
-package io.opentracing.contrib.grpc;
+package io.opentracing.contrib;
 
 import io.grpc.BindableService;
 import io.grpc.Context;
@@ -11,9 +11,8 @@ import io.grpc.ServerInterceptors;
 import io.grpc.ServerServiceDefinition;
 import io.grpc.ForwardingServerCallListener;
 
-import io.opentracing.contrib.grpc.OpenTracingContextKey;
-import io.opentracing.contrib.grpc.OperationNameConstructor;
-import io.opentracing.contrib.grpc.ServerRequestAttribute;
+import io.opentracing.contrib.OpenTracingContextKey;
+import io.opentracing.contrib.OperationNameConstructor;
 import io.opentracing.propagation.Format;
 import io.opentracing.propagation.TextMapExtractAdapter;
 import io.opentracing.Span;
@@ -229,5 +228,12 @@ public class ServerTracingInterceptor implements ServerInterceptor {
             return new ServerTracingInterceptor(this.tracer, this.operationNameConstructor, 
                 this.streaming, this.verbose, this.tracedAttributes);
         }
+    }
+
+    enum ServerRequestAttribute {
+        HEADERS,
+        METHOD_TYPE,
+        METHOD_NAME,
+        CALL_ATTRIBUTES
     }
 }    

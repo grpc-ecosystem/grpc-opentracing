@@ -1,4 +1,4 @@
-package io.opentracing.contrib.grpc;
+package io.opentracing.contrib;
 
 import static io.grpc.MethodDescriptor.generateFullMethodName;
 import static io.grpc.stub.ClientCalls.asyncUnaryCall;
@@ -23,14 +23,14 @@ public class GreeterGrpc {
 
   // Static method descriptors that strictly reflect the proto.
   @io.grpc.ExperimentalApi("https://github.com/grpc/grpc-java/issues/1901")
-  public static final io.grpc.MethodDescriptor<io.opentracing.contrib.grpc.HelloRequest,
-      io.opentracing.contrib.grpc.HelloReply> METHOD_SAY_HELLO =
+  public static final io.grpc.MethodDescriptor<io.opentracing.contrib.HelloRequest,
+      io.opentracing.contrib.HelloReply> METHOD_SAY_HELLO =
       io.grpc.MethodDescriptor.create(
           io.grpc.MethodDescriptor.MethodType.UNARY,
           generateFullMethodName(
               "helloworld.Greeter", "SayHello"),
-          io.grpc.protobuf.ProtoUtils.marshaller(io.opentracing.contrib.grpc.HelloRequest.getDefaultInstance()),
-          io.grpc.protobuf.ProtoUtils.marshaller(io.opentracing.contrib.grpc.HelloReply.getDefaultInstance()));
+          io.grpc.protobuf.ProtoUtils.marshaller(io.opentracing.contrib.HelloRequest.getDefaultInstance()),
+          io.grpc.protobuf.ProtoUtils.marshaller(io.opentracing.contrib.HelloReply.getDefaultInstance()));
 
   /**
    * Creates a new async stub that supports all call types for the service
@@ -67,16 +67,16 @@ public class GreeterGrpc {
      * Sends a greeting
      * </pre>
      */
-    public void sayHello(io.opentracing.contrib.grpc.HelloRequest request,
-        io.grpc.stub.StreamObserver<io.opentracing.contrib.grpc.HelloReply> responseObserver);
+    public void sayHello(io.opentracing.contrib.HelloRequest request,
+        io.grpc.stub.StreamObserver<io.opentracing.contrib.HelloReply> responseObserver);
   }
 
   @io.grpc.ExperimentalApi("https://github.com/grpc/grpc-java/issues/1469")
   public static abstract class GreeterImplBase implements Greeter, io.grpc.BindableService {
 
     @java.lang.Override
-    public void sayHello(io.opentracing.contrib.grpc.HelloRequest request,
-        io.grpc.stub.StreamObserver<io.opentracing.contrib.grpc.HelloReply> responseObserver) {
+    public void sayHello(io.opentracing.contrib.HelloRequest request,
+        io.grpc.stub.StreamObserver<io.opentracing.contrib.HelloReply> responseObserver) {
       asyncUnimplementedUnaryCall(METHOD_SAY_HELLO, responseObserver);
     }
 
@@ -97,7 +97,7 @@ public class GreeterGrpc {
      * Sends a greeting
      * </pre>
      */
-    public io.opentracing.contrib.grpc.HelloReply sayHello(io.opentracing.contrib.grpc.HelloRequest request);
+    public io.opentracing.contrib.HelloReply sayHello(io.opentracing.contrib.HelloRequest request);
   }
 
   /**
@@ -112,8 +112,8 @@ public class GreeterGrpc {
      * Sends a greeting
      * </pre>
      */
-    public com.google.common.util.concurrent.ListenableFuture<io.opentracing.contrib.grpc.HelloReply> sayHello(
-        io.opentracing.contrib.grpc.HelloRequest request);
+    public com.google.common.util.concurrent.ListenableFuture<io.opentracing.contrib.HelloReply> sayHello(
+        io.opentracing.contrib.HelloRequest request);
   }
 
   public static class GreeterStub extends io.grpc.stub.AbstractStub<GreeterStub>
@@ -134,8 +134,8 @@ public class GreeterGrpc {
     }
 
     @java.lang.Override
-    public void sayHello(io.opentracing.contrib.grpc.HelloRequest request,
-        io.grpc.stub.StreamObserver<io.opentracing.contrib.grpc.HelloReply> responseObserver) {
+    public void sayHello(io.opentracing.contrib.HelloRequest request,
+        io.grpc.stub.StreamObserver<io.opentracing.contrib.HelloReply> responseObserver) {
       asyncUnaryCall(
           getChannel().newCall(METHOD_SAY_HELLO, getCallOptions()), request, responseObserver);
     }
@@ -159,7 +159,7 @@ public class GreeterGrpc {
     }
 
     @java.lang.Override
-    public io.opentracing.contrib.grpc.HelloReply sayHello(io.opentracing.contrib.grpc.HelloRequest request) {
+    public io.opentracing.contrib.HelloReply sayHello(io.opentracing.contrib.HelloRequest request) {
       return blockingUnaryCall(
           getChannel(), METHOD_SAY_HELLO, getCallOptions(), request);
     }
@@ -183,8 +183,8 @@ public class GreeterGrpc {
     }
 
     @java.lang.Override
-    public com.google.common.util.concurrent.ListenableFuture<io.opentracing.contrib.grpc.HelloReply> sayHello(
-        io.opentracing.contrib.grpc.HelloRequest request) {
+    public com.google.common.util.concurrent.ListenableFuture<io.opentracing.contrib.HelloReply> sayHello(
+        io.opentracing.contrib.HelloRequest request) {
       return futureUnaryCall(
           getChannel().newCall(METHOD_SAY_HELLO, getCallOptions()), request);
     }
@@ -212,8 +212,8 @@ public class GreeterGrpc {
     public void invoke(Req request, io.grpc.stub.StreamObserver<Resp> responseObserver) {
       switch (methodId) {
         case METHODID_SAY_HELLO:
-          serviceImpl.sayHello((io.opentracing.contrib.grpc.HelloRequest) request,
-              (io.grpc.stub.StreamObserver<io.opentracing.contrib.grpc.HelloReply>) responseObserver);
+          serviceImpl.sayHello((io.opentracing.contrib.HelloRequest) request,
+              (io.grpc.stub.StreamObserver<io.opentracing.contrib.HelloReply>) responseObserver);
           break;
         default:
           throw new AssertionError();
@@ -243,8 +243,8 @@ public class GreeterGrpc {
           METHOD_SAY_HELLO,
           asyncUnaryCall(
             new MethodHandlers<
-              io.opentracing.contrib.grpc.HelloRequest,
-              io.opentracing.contrib.grpc.HelloReply>(
+              io.opentracing.contrib.HelloRequest,
+              io.opentracing.contrib.HelloReply>(
                 serviceImpl, METHODID_SAY_HELLO)))
         .build();
   }

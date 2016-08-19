@@ -1,4 +1,4 @@
-package io.opentracing.contrib.grpc;
+package io.opentracing.contrib;
 
 import io.grpc.Context;
 
@@ -12,7 +12,7 @@ import io.opentracing.Span;
  */
 public class OpenTracingContextKey {
     
-    public static final String KEY_NAME = "ot-active-span";
+    public static final String KEY_NAME = "io.opentracing.active-span";
     private static final Context.Key<Span> key = Context.key(KEY_NAME);
 
     /**

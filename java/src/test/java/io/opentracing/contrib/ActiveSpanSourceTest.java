@@ -1,4 +1,4 @@
-package io.opentracing.contrib.grpc;
+package io.opentracing.contrib;
 
 import static org.junit.Assert.assertEquals;
 
@@ -30,7 +30,7 @@ public class ActiveSpanSourceTest {
 	
 	@Test 
 	public void TestDefaultGrpc() {
-		ActiveSpanSource ss = ActiveSpanSource.GRPC;
+		ActiveSpanSource ss = ActiveSpanSource.GRPC_CONTEXT;
 		assertEquals("active span should be null, no span in OpenTracingContextKey", ss.getActiveSpan(), null);
 		
 		Span span = tracer.buildSpan("s0").start();
