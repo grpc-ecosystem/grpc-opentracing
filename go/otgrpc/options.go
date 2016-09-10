@@ -1,5 +1,7 @@
 package otgrpc
 
+import "github.com/opentracing/opentracing-go"
+
 // Option instances may be used in OpenTracing(Server|Client)Interceptor
 // initialization.
 //
@@ -15,11 +17,28 @@ func LogPayloads() Option {
 	}
 }
 
+// SpanDecoratorFunc provides an (optional) mechanism for otgrpc users to add
+// arbitrary tags/logs/etc to the opentracing.Span associated with client
+// and/or server RPCs.
+type SpanDecoratorFunc func(
+	span opentracing.Span,
+	method string,
+	req, resp interface{},
+	grpcError error)
+
+// SpanDecorator binds a function that decorates gRPC Spans.
+func SpanDecorator(decorator SpanDecoratorFunc) Option {
+	return func(o *options) {
+		o.decorator = decorator
+	}
+}
+
 // The internal-only options struct. Obviously overkill at the moment; but will
 // scale well as production use dictates other configuration and tuning
 // parameters.
 type options struct {
 	logPayloads bool
+	decorator   SpanDecoratorFunc
 }
 
 // newOptions returns the default options.

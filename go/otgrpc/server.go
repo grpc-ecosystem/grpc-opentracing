@@ -42,25 +42,28 @@ func OpenTracingServerInterceptor(tracer opentracing.Tracer, optFuncs ...Option)
 			// don't know where to put such an error and must rely on Tracer
 			// implementations to do something appropriate for the time being.
 		}
-		span := tracer.StartSpan(
+		serverSpan := tracer.StartSpan(
 			info.FullMethod,
 			ext.RPCServerOption(spanContext),
 			gRPCComponentTag,
 		)
-		defer span.Finish()
+		defer serverSpan.Finish()
 
-		ctx = opentracing.ContextWithSpan(ctx, span)
+		ctx = opentracing.ContextWithSpan(ctx, serverSpan)
 		if otgrpcOpts.logPayloads {
-			span.LogEventWithPayload("gRPC request", req)
+			serverSpan.LogEventWithPayload("gRPC request", req)
 		}
 		resp, err = handler(ctx, req)
 		if err == nil {
 			if otgrpcOpts.logPayloads {
-				span.LogEventWithPayload("gRPC response", resp)
+				serverSpan.LogEventWithPayload("gRPC response", resp)
 			}
 		} else {
-			ext.Error.Set(span, true)
-			span.LogEventWithPayload("gRPC error", err)
+			ext.Error.Set(serverSpan, true)
+			serverSpan.LogEventWithPayload("gRPC error", err)
+		}
+		if otgrpcOpts.decorator != nil {
+			otgrpcOpts.decorator(serverSpan, info.FullMethod, req, resp, err)
 		}
 		return resp, err
 	}
