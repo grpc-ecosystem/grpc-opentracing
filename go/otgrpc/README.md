@@ -9,7 +9,12 @@ systems in Go.
 go get github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc
 ```
 
-## Usage on the client
+## Documentation
+
+See the basic usage examples below and the [package documentation on
+godoc.org](https://godoc.org/github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc).
+
+## Client-side usage example
 
 Wherever you call `grpc.Dial`:
 
@@ -28,7 +33,7 @@ conn, err := grpc.Dial(
 // All future RPC activity involving `conn` will be automatically traced.
 ```
 
-## Usage on the server
+## Server-side usage example
 
 Wherever you call `grpc.NewServer`:
 
