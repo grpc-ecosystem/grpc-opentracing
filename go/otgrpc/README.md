@@ -18,7 +18,7 @@ godoc.org](https://godoc.org/github.com/grpc-ecosystem/grpc-opentracing/go/otgrp
 
 Wherever you call `grpc.Dial`:
 
-```
+```go
 // You must have some sort of OpenTracing Tracer instance on hand.
 var tracer opentracing.Tracer = ...
 ...
@@ -37,7 +37,7 @@ conn, err := grpc.Dial(
 
 Wherever you call `grpc.NewServer`:
 
-```
+```go
 // You must have some sort of OpenTracing Tracer instance on hand.
 var tracer opentracing.Tracer = ...
 ...
