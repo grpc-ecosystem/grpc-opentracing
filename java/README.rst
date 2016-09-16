@@ -49,11 +49,13 @@ If you want to add basic tracing to your clients and servers, you can do so in a
 
         private int port;
         private Server server;
+        // Any io.opentracing.Tracer implementation will do here. For instance,
+        //   https://github.com/uber/jaeger-client-java/blob/master/jaeger-core/src/main/java/com/uber/jaeger/Tracer.java
+        // generates Zipkin-compatible data.
+        private final Tracer tracer;
 
         private void start() throws IOException {
-
-            Tracer tracer = aTracerImpl;
-            ServerTracingInterceptor tracingInterceptor = new ServerTracingInterceptor(tracer);
+            ServerTracingInterceptor tracingInterceptor = new ServerTracingInterceptor(this.tracer);
 
             server = ServerBuilder.forPort(port)
                 .addService(tracingInterceptor.intercept(someServiceDef))
@@ -76,6 +78,10 @@ If you want to add basic tracing to your clients and servers, you can do so in a
 
         private final ManagedChannel channel;
         private final GreeterGrpc.GreeterBlockingStub blockingStub;
+        // Any io.opentracing.Tracer implementation will do here. For instance,
+        //   https://github.com/uber/jaeger-client-java/blob/master/jaeger-core/src/main/java/com/uber/jaeger/Tracer.java
+        // generates Zipkin-compatible data.
+        private final Tracer tracer;
 
         public YourClient(String host, int port) {
 
@@ -83,8 +89,7 @@ If you want to add basic tracing to your clients and servers, you can do so in a
                 .usePlaintext(true)
                 .build();
 
-            Tracer tracer = aTracerImpl;
-            ClientTracingInterceptor tracingInterceptor = new ClientTracingInterceptor(tracer)
+            ClientTracingInterceptor tracingInterceptor = new ClientTracingInterceptor(this.tracer)
 
             blockingStub = GreeterGrpc.newBlockingStub(tracingInterceptor.intercept(channel));
         }
@@ -179,7 +184,7 @@ For example:
 
 .. code-block:: java
 
-    Tracer tracer = aTracerImpl;
+    Tracer tracer = ...;
 
     // some unit of internal work that you want to trace
     Runnable internalWork = someInternalWork
