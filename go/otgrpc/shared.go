@@ -1,6 +1,8 @@
 package otgrpc
 
 import (
+	"strings"
+
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	"google.golang.org/grpc/metadata"
@@ -18,6 +20,7 @@ type metadataReaderWriter struct {
 }
 
 func (w metadataReaderWriter) Set(key, val string) {
+	key = strings.ToLower(key)
 	w.MD[key] = append(w.MD[key], val)
 }
 
