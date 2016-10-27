@@ -52,7 +52,7 @@ func OpenTracingClientInterceptor(tracer opentracing.Tracer, optFuncs ...Option)
 			md = metadata.New(nil)
 		}
 		mdWriter := metadataReaderWriter{md}
-		err = tracer.Inject(clientSpan.Context(), opentracing.TextMap, mdWriter)
+		err = tracer.Inject(clientSpan.Context(), opentracing.HTTPHeaders, mdWriter)
 		// We have no better place to record an error than the Span itself :-/
 		if err != nil {
 			clientSpan.LogEventWithPayload(

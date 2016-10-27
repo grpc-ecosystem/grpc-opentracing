@@ -36,7 +36,7 @@ func OpenTracingServerInterceptor(tracer opentracing.Tracer, optFuncs ...Option)
 		if !ok {
 			md = metadata.New(nil)
 		}
-		spanContext, err := tracer.Extract(opentracing.TextMap, metadataReaderWriter{md})
+		spanContext, err := tracer.Extract(opentracing.HTTPHeaders, metadataReaderWriter{md})
 		if err != nil && err != opentracing.ErrSpanContextNotFound {
 			// TODO: establish some sort of error reporting mechanism here. We
 			// don't know where to put such an error and must rely on Tracer
