@@ -20,6 +20,11 @@ type metadataReaderWriter struct {
 }
 
 func (w metadataReaderWriter) Set(key, val string) {
+	// The GRPC HPACK implementation rejects any uppercase keys here.
+	//
+	// As such, since the HTTP_HEADERS format is case-insensitive anyway, we
+	// blindly lowercase the key (which is guaranteed to work in the
+	// Inject/Extract sense per the OpenTracing spec).
 	key = strings.ToLower(key)
 	w.MD[key] = append(w.MD[key], val)
 }
