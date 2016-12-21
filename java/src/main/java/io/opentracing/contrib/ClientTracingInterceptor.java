@@ -37,6 +37,13 @@ public class ClientTracingInterceptor implements ClientInterceptor {
     private final ActiveSpanSource activeSpanSource;
 
     /**
+     * use spi mechanism to get tracer implementation.
+     */
+    public ClientTracingInterceptor(){
+        this(TracerLoader.load());
+    }
+
+    /**
      * @param tracer to use to trace requests
      */
     public ClientTracingInterceptor(Tracer tracer) {
