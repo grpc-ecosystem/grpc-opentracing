@@ -39,6 +39,8 @@ public class ServerTracingInterceptor implements ServerInterceptor {
 
     /**
      * use spi mechanism to get tracer implementation.
+     *
+     * @see TracerLoader
      */
     public ServerTracingInterceptor(){
         this(TracerLoader.load());
@@ -178,6 +180,15 @@ public class ServerTracingInterceptor implements ServerInterceptor {
         private boolean streaming;
         private boolean verbose;
         private Set<ServerRequestAttribute> tracedAttributes;
+
+        /**
+         * Creates a Builder with default configuration and auto tracer loader with spi mechanism
+         *
+         * @see TracerLoader
+         */
+        public Builder() {
+            this(TracerLoader.load());
+        }
 
         /**
          * @param tracer to use for this intercepter

@@ -16,7 +16,7 @@ This package is available on Maven Central and can be added to your project as f
         <dependency>
             <groupId>io.opentracing.contrib</groupId>
             <artifactId>grpc-opentracing</artifactId>
-            <version>0.1.0</version>
+            <version>0.2.0</version>
         </dependency>
     </dependencies>
 
@@ -24,7 +24,7 @@ This package is available on Maven Central and can be added to your project as f
 
 .. code-block::
 
-    compile 'io.opentracing.contrib:grpc-opentracing:0.1.0'
+    compile 'io.opentracing.contrib:grpc-opentracing:0.2.0'
 
 ==========
 Quickstart

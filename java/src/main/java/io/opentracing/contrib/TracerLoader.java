@@ -9,6 +9,15 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
+ * Tracer Implementation Loader.
+ * <p>
+ * The loader uses {@link java.util.ServiceLoader} to get {@link Tracer} implemetation.
+ * <p>
+ * The loader make sure in the classpath, there is only one implementation,
+ * if exist more than one,
+ * loader will use {@link io.opentracing.NoopTracer} instead, to avoid implicit choice.
+ * <p>
+ *
  * Created by wusheng on 2016/12/21.
  */
 public class TracerLoader {
@@ -23,7 +32,7 @@ public class TracerLoader {
      */
     static Tracer load() {
         Iterator<Tracer> tracerIterator = ServiceLoader.load(Tracer.class).iterator();
-        Tracer tracer = null;
+        Tracer tracer;
         if (tracerIterator.hasNext()) {
             tracer = tracerIterator.next();
             if (tracerIterator.hasNext()) {
@@ -31,7 +40,7 @@ public class TracerLoader {
                 tracer = NoopTracerFactory.create();
             }
         } else {
-            tracer =  NoopTracerFactory.create();
+            tracer = NoopTracerFactory.create();
         }
         return tracer;
     }

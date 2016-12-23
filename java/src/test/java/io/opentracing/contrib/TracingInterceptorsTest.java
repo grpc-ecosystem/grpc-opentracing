@@ -41,6 +41,35 @@ public class TracingInterceptorsTest {
 			serviceTracer.reset();
 		}
 	}
+
+	@Test
+	public void TestTracedServerBasicWithServiceLoader() {
+		TracedClient client = new TracedClient("localhost", 50051, null);
+
+		MockTracer serviceTracer = new MockTracer();
+		ServerTracingInterceptor tracingInterceptor = new ServerTracingInterceptor();
+		TracedService service = new TracedService();
+
+		try {
+			service.startWithInterceptor(tracingInterceptor);
+
+			assertTrue("call should complete", client.greet("world"));
+			assertEquals("one span should have been created and finished for one client request",
+					serviceTracer.finishedSpans().size(), 1);
+
+			MockSpan span = serviceTracer.finishedSpans().get(0);
+			assertEquals("span should have default name", span.operationName(), "helloworld.Greeter/SayHello");
+			assertEquals("span should have no parents", span.parentId(), 0);
+			assertTrue("span should have no logs", span.logEntries().isEmpty());
+			assertTrue("span should have no tags", span.tags().isEmpty());
+			assertFalse("span should have no baggage", span.context().baggageItems().iterator().hasNext());
+		} catch (Exception e) {
+			assertTrue(e.getMessage(), false);
+		} finally {
+			service.stop();
+			serviceTracer.reset();
+		}
+	}
 	
 	@Test
 	public void TestTracedServerWithVerbosity() {
@@ -227,9 +256,6 @@ public class TracingInterceptorsTest {
 			MockSpan span = clientTracer.finishedSpans().get(0);
 			assertEquals("span should have prefix", span.operationName(), "helloworld.Greeter/SayHello");
 			assertEquals("span should have no parents", span.parentId(), 0);
-			for(LogEntry entry : span.logEntries()) {
-				System.out.println(entry.eventName());
-			}
 			System.out.println(span.logEntries());
 			assertEquals("span should have logs for start, onHeaders, onMessage, onClose, sendMessage", 5, span.logEntries().size());
 			assertEquals("span should have no tags", span.tags().size(), 0);
@@ -263,9 +289,6 @@ public class TracingInterceptorsTest {
 			MockSpan span = clientTracer.finishedSpans().get(0);
 			assertEquals("span should have prefix", span.operationName(), "helloworld.Greeter/SayHello");
 			assertEquals("span should have no parents", span.parentId(), 0);
-			for(LogEntry entry : span.logEntries()) {
-				System.out.println(entry.eventName());
-			}
 			assertEquals("span should have log for onMessage, halfClose, sendMessage", 3, span.logEntries().size());
 			assertEquals("span should have no tags", span.tags().size(), 0);
 			assertFalse("span should have no baggage", span.context().baggageItems().iterator().hasNext());

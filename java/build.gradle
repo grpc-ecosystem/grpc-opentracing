@@ -1,7 +1,7 @@
 description = "grpc-java: OpenTracing"
 
 group = "io.opentracing.contrib"
-version = '0.1.0'
+version = '0.2.0'
 
 apply plugin: 'java'
 apply plugin: 'maven'
