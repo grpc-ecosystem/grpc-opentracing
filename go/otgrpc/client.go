@@ -49,6 +49,8 @@ func OpenTracingClientInterceptor(tracer opentracing.Tracer, optFuncs ...Option)
 		md, ok := metadata.FromContext(ctx)
 		if !ok {
 			md = metadata.New(nil)
+		} else {
+			md = md.Copy()
 		}
 		mdWriter := metadataReaderWriter{md}
 		err = tracer.Inject(clientSpan.Context(), opentracing.HTTPHeaders, mdWriter)
