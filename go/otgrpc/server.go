@@ -42,6 +42,8 @@ func OpenTracingServerInterceptor(tracer opentracing.Tracer, optFuncs ...Option)
 			// TODO: establish some sort of error reporting mechanism here. We
 			// don't know where to put such an error and must rely on Tracer
 			// implementations to do something appropriate for the time being.
+		} else if err == opentracing.ErrSpanContextNotFound && otgrpcOpts.doNotStartTrace {
+			return handler(ctx, req)
 		}
 		serverSpan := tracer.StartSpan(
 			info.FullMethod,

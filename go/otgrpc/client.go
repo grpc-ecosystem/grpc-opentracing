@@ -38,6 +38,8 @@ func OpenTracingClientInterceptor(tracer opentracing.Tracer, optFuncs ...Option)
 		var parentCtx opentracing.SpanContext
 		if parent := opentracing.SpanFromContext(ctx); parent != nil {
 			parentCtx = parent.Context()
+		} else if otgrpcOpts.doNotStartTrace {
+			return invoker(ctx, method, req, resp, cc, opts...)
 		}
 		clientSpan := tracer.StartSpan(
 			method,

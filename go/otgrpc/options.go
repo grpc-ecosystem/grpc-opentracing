@@ -17,6 +17,14 @@ func LogPayloads() Option {
 	}
 }
 
+// DoNotStartTrace returns an Option that tells the OpenTracing instrumentation to
+// only trace if the context already contains a Span; do not start a new Span
+func DoNotStartTrace() Option {
+	return func(o *options) {
+		o.doNotStartTrace = true
+	}
+}
+
 // SpanDecoratorFunc provides an (optional) mechanism for otgrpc users to add
 // arbitrary tags/logs/etc to the opentracing.Span associated with client
 // and/or server RPCs.
@@ -39,12 +47,14 @@ func SpanDecorator(decorator SpanDecoratorFunc) Option {
 type options struct {
 	logPayloads bool
 	decorator   SpanDecoratorFunc
+	doNotStartTrace bool
 }
 
 // newOptions returns the default options.
 func newOptions() *options {
 	return &options{
 		logPayloads: false,
+		doNotStartTrace: false,
 	}
 }
 
