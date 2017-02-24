@@ -18,10 +18,11 @@ import io.opentracing.SpanContext;
 import io.opentracing.Tracer;
 
 import java.nio.charset.Charset;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.HashSet;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * An intercepter that applies tracing via OpenTracing to all requests 
@@ -33,7 +34,7 @@ public class ServerTracingInterceptor implements ServerInterceptor {
     private final OperationNameConstructor operationNameConstructor;
     private final boolean streaming;
     private final boolean verbose;
-    private final Set<ServerRequestAttribute> tracedAttributes; 
+    private final Set<ServerRequestAttribute> tracedAttributes;
 
     /**
      * @param tracer used to trace requests
