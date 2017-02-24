@@ -19,7 +19,10 @@ func LogPayloads() Option {
 
 // SpanInclusionFunc provides an optional mechanism to decide whether or not
 // to trace a given gRPC call. Return true to create a Span and initiate
-// tracing, false to not create a Span and not trace
+// tracing, false to not create a Span and not trace.
+//
+// parentSpanCtx may be nil if no parent could be extraction from either the Go
+// context.Context (on the client) or the RPC (on the server).
 type SpanInclusionFunc func(
 	parentSpanCtx opentracing.SpanContext,
 	method string,
