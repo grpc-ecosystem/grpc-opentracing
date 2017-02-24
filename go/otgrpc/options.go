@@ -17,11 +17,18 @@ func LogPayloads() Option {
 	}
 }
 
-// DoNotStartTrace returns an Option that tells the OpenTracing instrumentation to
-// only trace if the context already contains a Span; do not start a new Span
-func DoNotStartTrace() Option {
+// SpanFilterFunc provides an optional mechanism to decided whether or not
+// to trace a given gRPC call. Return true to create a Span and initiate
+// tracing, false to not create a Span and not trace
+type SpanFilterFunc func(
+	parentSpanCtx opentracing.SpanContext,
+	method string,
+	req, resp interface{}) bool
+
+// SpanFilter binds a SpanFilterFunc to the options
+func SpanFilter(filter SpanFilterFunc) Option {
 	return func(o *options) {
-		o.doNotStartTrace = true
+		o.filter = filter
 	}
 }
 
@@ -47,14 +54,18 @@ func SpanDecorator(decorator SpanDecoratorFunc) Option {
 type options struct {
 	logPayloads bool
 	decorator   SpanDecoratorFunc
-	doNotStartTrace bool
+	filter      SpanFilterFunc
 }
 
 // newOptions returns the default options.
 func newOptions() *options {
 	return &options{
 		logPayloads: false,
-		doNotStartTrace: false,
+		filter: func(parentSpanCtx opentracing.SpanContext,
+			method string,
+			req, resp interface{}) bool {
+			return true
+		},
 	}
 }
 
