@@ -39,7 +39,7 @@ func OpenTracingClientInterceptor(tracer opentracing.Tracer, optFuncs ...Option)
 		if parent := opentracing.SpanFromContext(ctx); parent != nil {
 			parentCtx = parent.Context()
 		}
-		if !otgrpcOpts.filter(parentCtx, method, req, resp) {
+		if !otgrpcOpts.include(parentCtx, method, req, resp) {
 			return invoker(ctx, method, req, resp, cc, opts...)
 		}
 		clientSpan := tracer.StartSpan(
