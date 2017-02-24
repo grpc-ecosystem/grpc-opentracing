@@ -16,7 +16,7 @@ This package is available on Maven Central and can be added to your project as f
         <dependency>
             <groupId>io.opentracing.contrib</groupId>
             <artifactId>grpc-opentracing</artifactId>
-            <version>0.1.0</version>
+            <version>0.2.0</version>
         </dependency>
     </dependencies>
 
@@ -24,7 +24,7 @@ This package is available on Maven Central and can be added to your project as f
 
 .. code-block::
 
-    compile 'io.opentracing.contrib:grpc-opentracing:0.1.0'
+    compile 'io.opentracing.contrib:grpc-opentracing:0.2.0'
 
 ==========
 Quickstart
@@ -55,6 +55,8 @@ If you want to add basic tracing to your clients and servers, you can do so in a
         private final Tracer tracer;
 
         private void start() throws IOException {
+            // ServerTracingInterceptor has another no parameter constructor
+            // It uses spi mechanism to load io.opentracing.Tracer instance
             ServerTracingInterceptor tracingInterceptor = new ServerTracingInterceptor(this.tracer);
 
             server = ServerBuilder.forPort(port)
@@ -89,7 +91,9 @@ If you want to add basic tracing to your clients and servers, you can do so in a
                 .usePlaintext(true)
                 .build();
 
-            ClientTracingInterceptor tracingInterceptor = new ClientTracingInterceptor(this.tracer)
+            // ClientTracingInterceptor has another no parameter constructor
+            // It uses spi mechanism to load io.opentracing.Tracer instance
+            ClientTracingInterceptor tracingInterceptor = new ClientTracingInterceptor(this.tracer)
 
             blockingStub = GreeterGrpc.newBlockingStub(tracingInterceptor.intercept(channel));
         }
@@ -112,6 +116,8 @@ A ``ServerTracingInterceptor`` uses default settings, which you can override by 
 
 .. code-block:: java
 
+    // ServerTracingInterceptor.Builder has another no parameter constructor
+    // It use spi mechanism to load io.opentracing.Tracer instance
     ServerTracingInterceptor tracingInterceptor = new ServerTracingInterceptor
         .Builder(tracer)
         .withStreaming()
@@ -144,6 +150,8 @@ A ``ClientTracingInterceptor`` also has default settings, which you can override
 
     import io.opentracing.Span;
 
+    // ClientTracingInterceptor.Builder also has another no parameter constructor
+    // It use spi mechanism to load io.opentracing.Tracer instance
     ClientTracingInterceptor tracingInterceptor = new ClientTracingInterceptor
         .Builder(tracer)
         .withStreaming()

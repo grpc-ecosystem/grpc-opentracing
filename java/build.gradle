@@ -1,7 +1,7 @@
 description = "grpc-java: OpenTracing"
 
 group = "io.opentracing.contrib"
-version = '0.1.0'
+version = '0.2.0'
 
 apply plugin: 'java'
 apply plugin: 'maven'
@@ -47,18 +47,20 @@ repositories {
 
 jar {
 	baseName 'grpc-opentracing'
-	version = '0.1.0'
+	version = '0.2.0'
 }
 
 dependencies {
-	compile 'io.grpc:grpc-core:1.0.0-pre1'
-	compile 'io.opentracing:opentracing-api:0.14.0'
-	testCompile 'io.opentracing:opentracing-mock:0.14.0'
-	testCompile 'io.grpc:grpc-protobuf:1.0.0-pre1'
-	testCompile 'io.grpc:grpc-netty:1.0.0-pre1'
-	testCompile 'io.grpc:grpc-stub:1.0.0-pre1'
+	compile 'io.grpc:grpc-core:1.0.2'
+	compile 'io.opentracing:opentracing-api:0.20.4'
+	compile 'io.opentracing:opentracing-noop:0.20.4'
+	testCompile 'io.opentracing:opentracing-mock:0.20.4'
+	testCompile 'io.grpc:grpc-protobuf:1.0.2'
+	testCompile 'io.grpc:grpc-netty:1.0.2'
+	testCompile 'io.grpc:grpc-stub:1.0.2'
 	testCompile 'junit:junit:4.12'
 }
+
 
 uploadArchives {
 	repositories {
@@ -76,7 +78,7 @@ uploadArchives {
 			pom.project {
 				name 'grpc-opentracing'
 				packaging 'jar'
-				// optionally artifactId can be defined here 
+				// optionally artifactId can be defined here
 				description 'Provides support for integrating OpenTracing in grpc clients and servers.'
 				url 'http://www.github.com/grpc-ecosystem/grpc-opentracing'
 
@@ -99,7 +101,7 @@ uploadArchives {
 						email 'kcamenzind@lightstep.com'
 					}
 				}
-		
+
 			}
 		}
 	}

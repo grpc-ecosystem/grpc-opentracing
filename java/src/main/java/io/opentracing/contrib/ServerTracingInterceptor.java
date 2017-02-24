@@ -35,7 +35,16 @@ public class ServerTracingInterceptor implements ServerInterceptor {
     private final OperationNameConstructor operationNameConstructor;
     private final boolean streaming;
     private final boolean verbose;
-    private final Set<ServerRequestAttribute> tracedAttributes; 
+    private final Set<ServerRequestAttribute> tracedAttributes;
+
+    /**
+     * use spi mechanism to get tracer implementation.
+     *
+     * @see TracerLoader
+     */
+    public ServerTracingInterceptor(){
+        this(TracerLoader.load());
+    }
 
     /**
      * @param tracer used to trace requests
@@ -171,6 +180,15 @@ public class ServerTracingInterceptor implements ServerInterceptor {
         private boolean streaming;
         private boolean verbose;
         private Set<ServerRequestAttribute> tracedAttributes;
+
+        /**
+         * Creates a Builder with default configuration and auto tracer loader with spi mechanism
+         *
+         * @see TracerLoader
+         */
+        public Builder() {
+            this(TracerLoader.load());
+        }
 
         /**
          * @param tracer to use for this intercepter

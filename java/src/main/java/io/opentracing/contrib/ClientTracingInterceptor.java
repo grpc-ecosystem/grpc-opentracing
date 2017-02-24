@@ -37,6 +37,15 @@ public class ClientTracingInterceptor implements ClientInterceptor {
     private final ActiveSpanSource activeSpanSource;
 
     /**
+     * use spi mechanism to get tracer implementation.
+     *
+     * @see TracerLoader
+     */
+    public ClientTracingInterceptor(){
+        this(TracerLoader.load());
+    }
+
+    /**
      * @param tracer to use to trace requests
      */
     public ClientTracingInterceptor(Tracer tracer) {
@@ -226,7 +235,16 @@ public class ClientTracingInterceptor implements ClientInterceptor {
         private boolean streaming;
         private boolean verbose;
         private Set<ClientRequestAttribute> tracedAttributes;
-        private ActiveSpanSource activeSpanSource;  
+        private ActiveSpanSource activeSpanSource;
+
+        /**
+         * Creates a Builder with default configuration and auto tracer loader with spi mechanism
+         *
+         * @see TracerLoader
+         */
+        public Builder() {
+            this(TracerLoader.load());
+        }
 
         /**
          * @param tracer to use for this intercepter
