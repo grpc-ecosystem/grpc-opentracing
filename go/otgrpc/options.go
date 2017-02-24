@@ -17,6 +17,21 @@ func LogPayloads() Option {
 	}
 }
 
+// IncludeSpanFunc provides an optional mechanism to decide whether or not
+// to trace a given gRPC call. Return true to create a Span and initiate
+// tracing, false to not create a Span and not trace
+type IncludeSpanFunc func(
+	parentSpanCtx opentracing.SpanContext,
+	method string,
+	req, resp interface{}) bool
+
+// IncludeSpan binds a IncludeSpanFunc to the options
+func IncludeSpan(include IncludeSpanFunc) Option {
+	return func(o *options) {
+		o.include = include
+	}
+}
+
 // SpanDecoratorFunc provides an (optional) mechanism for otgrpc users to add
 // arbitrary tags/logs/etc to the opentracing.Span associated with client
 // and/or server RPCs.
@@ -39,12 +54,18 @@ func SpanDecorator(decorator SpanDecoratorFunc) Option {
 type options struct {
 	logPayloads bool
 	decorator   SpanDecoratorFunc
+	include     IncludeSpanFunc
 }
 
 // newOptions returns the default options.
 func newOptions() *options {
 	return &options{
 		logPayloads: false,
+		include: func(parentSpanCtx opentracing.SpanContext,
+			method string,
+			req, resp interface{}) bool {
+			return true
+		},
 	}
 }
 
