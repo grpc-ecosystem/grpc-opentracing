@@ -17,7 +17,6 @@ import io.opentracing.Span;
 import io.opentracing.SpanContext;
 import io.opentracing.Tracer;
 
-import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -82,11 +81,7 @@ public class ServerTracingInterceptor implements ServerInterceptor {
     ) {
         Map<String, String> headerMap = new HashMap<String, String>();
         for (String key : headers.keys()) {
-            if (key.endsWith(Metadata.BINARY_HEADER_SUFFIX)) {
-                Metadata.Key<byte[]> headerKey = Metadata.Key.of(key, Metadata.BINARY_BYTE_MARSHALLER);
-                byte[] byteValue = headers.get(headerKey);
-                headerMap.put(headerKey.name(), new String(byteValue, Charset.forName("UTF-8")));
-            } else {
+            if (!key.endsWith(Metadata.BINARY_HEADER_SUFFIX)) {
                 String value = headers.get(Metadata.Key.of(key, Metadata.ASCII_STRING_MARSHALLER));
                 headerMap.put(key, value);
             }
