@@ -299,7 +299,7 @@ public class ClientTracingInterceptor implements ClientInterceptor {
         }
     }
 
-    enum ClientRequestAttribute {
+    public enum ClientRequestAttribute {
         METHOD_TYPE,
         METHOD_NAME,
         DEADLINE,

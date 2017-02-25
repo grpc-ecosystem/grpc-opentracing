@@ -11,19 +11,17 @@ import io.grpc.ServerInterceptors;
 import io.grpc.ServerServiceDefinition;
 import io.grpc.ForwardingServerCallListener;
 
-import io.opentracing.contrib.OpenTracingContextKey;
-import io.opentracing.contrib.OperationNameConstructor;
 import io.opentracing.propagation.Format;
 import io.opentracing.propagation.TextMapExtractAdapter;
 import io.opentracing.Span;
 import io.opentracing.SpanContext;
 import io.opentracing.Tracer;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * An intercepter that applies tracing via OpenTracing to all requests 
@@ -35,7 +33,7 @@ public class ServerTracingInterceptor implements ServerInterceptor {
     private final OperationNameConstructor operationNameConstructor;
     private final boolean streaming;
     private final boolean verbose;
-    private final Set<ServerRequestAttribute> tracedAttributes; 
+    private final Set<ServerRequestAttribute> tracedAttributes;
 
     /**
      * @param tracer used to trace requests
@@ -83,8 +81,11 @@ public class ServerTracingInterceptor implements ServerInterceptor {
     ) {
         Map<String, String> headerMap = new HashMap<String, String>();
         for (String key : headers.keys()) {
-            String value = headers.get(Metadata.Key.of(key, Metadata.ASCII_STRING_MARSHALLER));
-            headerMap.put(key, value);
+            if (!key.endsWith(Metadata.BINARY_HEADER_SUFFIX)) {
+                String value = headers.get(Metadata.Key.of(key, Metadata.ASCII_STRING_MARSHALLER));
+                headerMap.put(key, value);
+            }
+
         }
 
         final String operationName = operationNameConstructor.constructOperationName(call.getMethodDescriptor());
@@ -99,7 +100,7 @@ public class ServerTracingInterceptor implements ServerInterceptor {
                     span.setTag("grpc.method_name", call.getMethodDescriptor().getFullMethodName());
                     break;
                 case CALL_ATTRIBUTES:
-                    span.setTag("grpc.call_attributes", call.attributes().toString());
+                    span.setTag("grpc.call_attributes", call.getAttributes().toString());
                     break;
                 case HEADERS:
                     span.setTag("grpc.headers", headers.toString());
@@ -230,7 +231,7 @@ public class ServerTracingInterceptor implements ServerInterceptor {
         }
     }
 
-    enum ServerRequestAttribute {
+    public enum ServerRequestAttribute {
         HEADERS,
         METHOD_TYPE,
         METHOD_NAME,
