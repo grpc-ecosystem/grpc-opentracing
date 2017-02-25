@@ -53,7 +53,7 @@ jar {
 dependencies {
 	compile 'io.grpc:grpc-core:1.1.2'
 	compile 'io.opentracing:opentracing-api:0.15.0'
-    testCompile 'io.opentracing:opentracing-mock:0.15.0'
+	testCompile 'io.opentracing:opentracing-mock:0.15.0'
 	testCompile 'io.grpc:grpc-protobuf:1.1.2'
 	testCompile 'io.grpc:grpc-netty:1.1.2'
 	testCompile 'io.grpc:grpc-stub:1.1.2'
@@ -76,7 +76,7 @@ uploadArchives {
 			pom.project {
 				name 'grpc-opentracing'
 				packaging 'jar'
-				// optionally artifactId can be defined here 
+				// optionally artifactId can be defined here
 				description 'Provides support for integrating OpenTracing in grpc clients and servers.'
 				url 'http://www.github.com/grpc-ecosystem/grpc-opentracing'
 
@@ -99,7 +99,7 @@ uploadArchives {
 						email 'kcamenzind@lightstep.com'
 					}
 				}
-		
+
 			}
 		}
 	}
