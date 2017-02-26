@@ -296,3 +296,24 @@ Although we provide ``ServerTracingInterceptor.intercept(service)`` and ``Client
 
     blockingStub = GreeterGrpc.newBlockingStub(ClientInterceptors.intercept(channel,
         someInterceptor, someOtherInterceptor, clientTracingInterceptor));
+
+======================
+Releasing new versions
+======================
+
+Create a gradle.properties in this directory. It should look approximately like this:
+
+.. code-block::
+
+    sonatypeUsername=bensigelman
+    sonatypePassword=<your OSSRH sonatype password>
+    signing.keyId=<`gpg --list-keys` output, minus the prefix like "2048R/">
+    signing.password=<your gpg password>
+    signing.secretKeyRingFile=/Your/Homedir/.gnupg/secring.gpg
+
+Then run:
+
+.. code-block::
+
+    $ gradle uploadArchives closeAndPromoteRepository
+
