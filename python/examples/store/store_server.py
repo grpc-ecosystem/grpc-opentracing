@@ -10,8 +10,8 @@ import grpc
 from concurrent import futures
 import lightstep
 
-from otgrpc import open_tracing_server_interceptor
-from otgrpc.grpcext import intercept_server
+from grpc_opentracing import open_tracing_server_interceptor
+from grpc_opentracing.grpcext import intercept_server
 
 import store_pb2
 

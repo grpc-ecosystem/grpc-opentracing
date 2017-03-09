@@ -4,7 +4,7 @@ import sys
 import logging
 import re
 
-from otgrpc import grpcext
+from grpc_opentracing import grpcext
 import opentracing
 
 

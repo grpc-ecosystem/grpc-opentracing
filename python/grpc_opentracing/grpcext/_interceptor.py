@@ -3,7 +3,7 @@
 import collections
 
 import grpc
-from otgrpc import grpcext
+from grpc_opentracing import grpcext
 
 
 class _StreamClientInfo(

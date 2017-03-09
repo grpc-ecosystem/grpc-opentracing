@@ -1,7 +1,7 @@
 import unittest
 
 import grpc
-from otgrpc import grpcext
+from grpc_opentracing import grpcext
 
 from service import Service
 

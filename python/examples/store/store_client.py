@@ -8,8 +8,8 @@ from builtins import input
 import grpc
 import lightstep
 
-from otgrpc import open_tracing_client_interceptor
-from otgrpc.grpcext import intercept_channel
+from grpc_opentracing import open_tracing_client_interceptor
+from grpc_opentracing.grpcext import intercept_channel
 
 import store_pb2
 

@@ -6,7 +6,7 @@ import logging
 from six import iteritems
 
 import grpc
-from otgrpc import grpcext
+from grpc_opentracing import grpcext
 import opentracing
 
 

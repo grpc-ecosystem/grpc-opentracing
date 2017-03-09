@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='otgrpc',
+    name='grpcio-opentracing',
     version='1.0',
     description='Python OpenTracing Extensions for gRPC',
     long_description='',

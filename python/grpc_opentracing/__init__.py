@@ -30,7 +30,7 @@ def open_tracing_client_interceptor(tracer,
     Returns:
       A client-side interceptor object.
     """
-  from otgrpc import _client
+  from grpc_opentracing import _client
   return _client.OpenTracingClientInterceptor(tracer, active_span_source,
                                               log_payloads)
 
@@ -46,7 +46,7 @@ def open_tracing_server_interceptor(tracer, log_payloads=False):
     Returns:
       A server-side interceptor object.
     """
-  from otgrpc import _server
+  from grpc_opentracing import _server
   return _server.OpenTracingServerInterceptor(tracer, log_payloads)
 
 

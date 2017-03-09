@@ -78,7 +78,7 @@ def intercept_channel(channel, *interceptors):
       TypeError: If an interceptor derives from neither UnaryClientInterceptor
         nor StreamClientInterceptor.
   """
-  from otgrpc.grpcext import _interceptor
+  from grpc_opentracing.grpcext import _interceptor
   return _interceptor.intercept_channel(channel, *interceptors)
 
 
@@ -165,7 +165,7 @@ def intercept_server(server, *interceptors):
       TypeError: If an interceptor derives from neither UnaryServerInterceptor
         nor StreamServerInterceptor.
   """
-  from otgrpc.grpcext import _interceptor
+  from grpc_opentracing.grpcext import _interceptor
   return _interceptor.intercept_server(server, *interceptors)
 
 

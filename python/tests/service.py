@@ -2,7 +2,7 @@
 
 import grpc
 from grpc.framework.foundation import logging_pool
-from otgrpc import grpcext
+from grpc_opentracing import grpcext
 
 _SERIALIZE_REQUEST = lambda bytestring: bytestring
 _DESERIALIZE_REQUEST = lambda bytestring: bytestring
