@@ -3,7 +3,7 @@ import unittest
 import grpc
 from grpc_opentracing import grpcext
 
-from service import Service
+from _service import Service
 
 
 class ClientInterceptor(grpcext.UnaryClientInterceptor,
