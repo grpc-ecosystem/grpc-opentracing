@@ -9,10 +9,10 @@ _DESERIALIZE_REQUEST = lambda bytestring: bytestring
 _SERIALIZE_RESPONSE = lambda bytestring: bytestring
 _DESERIALIZE_RESPONSE = lambda bytestring: bytestring
 
-UNARY_UNARY = '/test/UnaryUnary'
-UNARY_STREAM = '/test/UnaryStream'
-STREAM_UNARY = '/test/StreamUnary'
-STREAM_STREAM = '/test/StreamStream'
+_UNARY_UNARY = '/test/UnaryUnary'
+_UNARY_STREAM = '/test/UnaryStream'
+_STREAM_UNARY = '/test/StreamUnary'
+_STREAM_STREAM = '/test/StreamStream'
 
 _STREAM_LENGTH = 5
 
@@ -61,17 +61,17 @@ class _GenericHandler(grpc.GenericRpcHandler):
   def service(self, handler_call_details):
     print 'servicing: ', handler_call_details.method
     method = handler_call_details.method
-    if method == UNARY_UNARY:
+    if method == _UNARY_UNARY:
       return _MethodHandler(unary_unary=self._handler.handle_unary_unary)
-    elif method == UNARY_STREAM:
+    elif method == _UNARY_STREAM:
       return _MethodHandler(
           response_streaming=True,
           unary_stream=self._handler.handle_unary_stream)
-    elif method == STREAM_UNARY:
+    elif method == _STREAM_UNARY:
       return _MethodHandler(
           request_streaming=True,
           stream_unary=self._handler.handle_stream_unary)
-    elif method == STREAM_STREAM:
+    elif method == _STREAM_STREAM:
       return _MethodHandler(
           request_streaming=True,
           response_streaming=True,
@@ -95,25 +95,25 @@ class Service(object):
 
   @property
   def unary_unary_multi_callable(self):
-    return self.channel.unary_unary(UNARY_UNARY)
+    return self.channel.unary_unary(_UNARY_UNARY)
 
   @property
   def unary_stream_multi_callable(self):
     return self.channel.unary_stream(
-        UNARY_STREAM,
+        _UNARY_STREAM,
         request_serializer=_SERIALIZE_REQUEST,
         response_deserializer=_DESERIALIZE_RESPONSE)
 
   @property
   def stream_unary_multi_callable(self):
     return self.channel.stream_unary(
-        STREAM_UNARY,
+        _STREAM_UNARY,
         request_serializer=_SERIALIZE_REQUEST,
         response_deserializer=_DESERIALIZE_RESPONSE)
 
   @property
   def stream_stream_multi_callable(self):
     return self.channel.stream_stream(
-        STREAM_STREAM,
+        _STREAM_STREAM,
         request_serializer=_SERIALIZE_REQUEST,
         response_deserializer=_DESERIALIZE_RESPONSE)

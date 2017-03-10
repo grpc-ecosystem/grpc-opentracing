@@ -44,12 +44,7 @@ class InterceptorTest(unittest.TestCase):
     self._service = Service([self._client_interceptor],
                             [self._server_interceptor])
 
-  def _clear(self):
-    self._client_interceptor.intercepted = False
-    self._server_interceptor.intercepted = False
-
   def testUnaryUnaryInterception(self):
-    self._clear()
     multi_callable = self._service.unary_unary_multi_callable
     request = b'\x01'
     expected_response = self._service.handler.handle_unary_unary(request, None)
@@ -60,7 +55,6 @@ class InterceptorTest(unittest.TestCase):
     self.assertTrue(self._server_interceptor.intercepted)
 
   def testUnaryUnaryInterceptionWithCall(self):
-    self._clear()
     multi_callable = self._service.unary_unary_multi_callable
     request = b'\x01'
     expected_response = self._service.handler.handle_unary_unary(request, None)
@@ -72,7 +66,6 @@ class InterceptorTest(unittest.TestCase):
     self.assertTrue(self._server_interceptor.intercepted)
 
   def testUnaryUnaryInterceptionFuture(self):
-    self._clear()
     multi_callable = self._service.unary_unary_multi_callable
     request = b'\x01'
     expected_response = self._service.handler.handle_unary_unary(request, None)
@@ -83,7 +76,6 @@ class InterceptorTest(unittest.TestCase):
     self.assertTrue(self._server_interceptor.intercepted)
 
   def testUnaryStreamInterception(self):
-    self._clear()
     multi_callable = self._service.unary_stream_multi_callable
     request = b'\x01'
     expected_response = self._service.handler.handle_unary_stream(request, None)
@@ -94,7 +86,6 @@ class InterceptorTest(unittest.TestCase):
     self.assertTrue(self._server_interceptor.intercepted)
 
   def testStreamUnaryInterception(self):
-    self._clear()
     multi_callable = self._service.stream_unary_multi_callable
     requests = [b'\x01', b'\x02']
     expected_response = self._service.handler.handle_stream_unary(
@@ -106,7 +97,6 @@ class InterceptorTest(unittest.TestCase):
     self.assertTrue(self._server_interceptor.intercepted)
 
   def testStreamUnaryInterceptionWithCall(self):
-    self._clear()
     multi_callable = self._service.stream_unary_multi_callable
     requests = [b'\x01', b'\x02']
     expected_response = self._service.handler.handle_stream_unary(
@@ -119,7 +109,6 @@ class InterceptorTest(unittest.TestCase):
     self.assertTrue(self._server_interceptor.intercepted)
 
   def testStreamUnaryInterceptionFuture(self):
-    self._clear()
     multi_callable = self._service.stream_unary_multi_callable
     requests = [b'\x01', b'\x02']
     expected_response = self._service.handler.handle_stream_unary(
@@ -131,7 +120,6 @@ class InterceptorTest(unittest.TestCase):
     self.assertTrue(self._server_interceptor.intercepted)
 
   def testStreamStreamInterception(self):
-    self._clear()
     multi_callable = self._service.stream_stream_multi_callable
     requests = [b'\x01', b'\x02']
     expected_response = self._service.handler.handle_stream_unary(
@@ -143,7 +131,7 @@ class InterceptorTest(unittest.TestCase):
     self.assertTrue(self._server_interceptor.intercepted)
 
 
-class InterceptorTest(unittest.TestCase):
+class MultiInterceptorTest(unittest.TestCase):
 
   def setUp(self):
     self._client_interceptors = [ClientInterceptor(), ClientInterceptor()]
@@ -159,7 +147,6 @@ class InterceptorTest(unittest.TestCase):
       server_interceptor.intercepted = False
 
   def testUnaryUnaryMultiInterception(self):
-    self._clear()
     multi_callable = self._service.unary_unary_multi_callable
     request = b'\x01'
     expected_response = self._service.handler.handle_unary_unary(request, None)
