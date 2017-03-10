@@ -11,8 +11,8 @@ pip install grpcio-opentracing
 
 ## Getting started
 
-See the below code for basic usage or [store](examples/store) for a complete 
-example.
+See the below code for basic usage or [examples/trivial](examples/trivial) for a
+complete example.
 
 ### Client-side usage example
 
@@ -63,3 +63,6 @@ class CustomRpcService(...):
     span = context.get_active_span()
     ...
 ```
+
+Also, check out [examples/integration](examples/integration) for a complete
+example.

@@ -18,8 +18,13 @@ _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 
 class CommandLine(command_line_pb2.CommandLineServicer):
 
+  def __init__(self, tracer):
+    self._tracer = tracer
+
   def Echo(self, request, context):
-    return command_line_pb2.CommandResponse(text=request.text)
+    with self._tracer.start_span(
+        'command_line_server_span', child_of=context.get_active_span().context):
+      return command_line_pb2.CommandResponse(text=request.text)
 
 
 def serve():
@@ -35,14 +40,15 @@ def serve():
     sys.exit(-1)
 
   tracer = lightstep.Tracer(
-      component_name='trivial-server', access_token=args.access_token)
+      component_name='integration-server', access_token=args.access_token)
   server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
 
   tracer_interceptor = open_tracing_server_interceptor(
       tracer, log_payloads=args.log_payloads)
   server = intercept_server(server, tracer_interceptor)
 
-  command_line_pb2.add_CommandLineServicer_to_server(CommandLine(), server)
+  command_line_pb2.add_CommandLineServicer_to_server(
+      CommandLine(tracer), server)
   server.add_insecure_port('[::]:50051')
   server.start()
   try:
