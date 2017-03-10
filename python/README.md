@@ -54,7 +54,7 @@ interceptor = open_tracing_client_interceptor(
 ```
 
 On the server-side, the `context` argument passed into your service methods
-packages the server's context.
+packages the gRPC span created on the server-side.
 
 ```python
 class CustomRpcService(...):
@@ -64,5 +64,4 @@ class CustomRpcService(...):
     ...
 ```
 
-Also, check out [examples/integration](examples/integration) for a complete
-example.
+See [examples/integration](examples/integration) for a complete example.
