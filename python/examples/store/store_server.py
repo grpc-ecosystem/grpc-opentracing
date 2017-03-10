@@ -1,4 +1,6 @@
 # A OpenTraced server for a Python service that implements the store interface.
+from __future__ import print_function
+
 import time
 import sys
 import argparse
@@ -77,7 +79,7 @@ def serve():
     sys.exit(-1)
 
   tracer = lightstep.Tracer(
-      component_name='python.store-server', access_token=args.access_token)
+      component_name='store-server', access_token=args.access_token)
   server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
 
   tracer_interceptor = open_tracing_server_interceptor(

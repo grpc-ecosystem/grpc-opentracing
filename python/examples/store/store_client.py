@@ -159,7 +159,7 @@ def run():
     sys.exit(-1)
 
   tracer = lightstep.Tracer(
-      component_name='python.store-client', access_token=args.access_token)
+      component_name='store-client', access_token=args.access_token)
   tracer_interceptor = open_tracing_client_interceptor(
       tracer, log_payloads=args.log_payloads)
   channel = grpc.insecure_channel('localhost:50051')
