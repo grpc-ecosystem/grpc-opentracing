@@ -2,6 +2,8 @@ import abc
 
 import six
 
+import grpc
+
 
 class ActiveSpanSource(six.with_metaclass(abc.ABCMeta)):
   """Provides a way to customize how the active span is determined."""
@@ -33,6 +35,22 @@ def open_tracing_client_interceptor(tracer,
   from grpc_opentracing import _client
   return _client.OpenTracingClientInterceptor(tracer, active_span_source,
                                               log_payloads)
+
+
+class OpenTracingServicerContext(
+    six.with_metaclass(abc.ABCMeta, grpc.ServicerContext)):
+  """A context object that provides access to the server-side span that received
+       the RPC.
+  """
+
+  @abc.abstractmethod
+  def get_active_span(self):
+    """Provides access to the server-side span that received the RPC.
+
+    Returns:
+      An opentracing.Span object.
+    """
+    raise NotImplementedError()
 
 
 def open_tracing_server_interceptor(tracer, log_payloads=False):

@@ -245,7 +245,7 @@ class _InterceptorRpcMethodHandler(grpc.RpcMethodHandler):
 
     def adaptation(request, servicer_context):
 
-      def handler(request):
+      def handler(request, servicer_context):
         return self._rpc_method_handler.unary_unary(request, servicer_context)
 
       return self._interceptor.intercept_unary(request, servicer_context,
@@ -261,7 +261,7 @@ class _InterceptorRpcMethodHandler(grpc.RpcMethodHandler):
 
     def adaptation(request, servicer_context):
 
-      def handler():
+      def handler(servicer_context):
         return self._rpc_method_handler.unary_stream(request, servicer_context)
 
       return self._interceptor.intercept_stream(
@@ -277,7 +277,7 @@ class _InterceptorRpcMethodHandler(grpc.RpcMethodHandler):
 
     def adaptation(request_iterator, servicer_context):
 
-      def handler():
+      def handler(servicer_context):
         return self._rpc_method_handler.stream_unary(request_iterator,
                                                      servicer_context)
 
@@ -294,7 +294,7 @@ class _InterceptorRpcMethodHandler(grpc.RpcMethodHandler):
 
     def adaptation(request_iterator, servicer_context):
 
-      def handler():
+      def handler(servicer_context):
         return self._rpc_method_handler.stream_stream(request_iterator,
                                                       servicer_context)
 

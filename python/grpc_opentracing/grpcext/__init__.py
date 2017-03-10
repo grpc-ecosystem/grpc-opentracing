@@ -121,7 +121,7 @@ class UnaryServerInterceptor(six.with_metaclass(abc.ABCMeta)):
             interceptor's responsibility to call it.
 
         Returns:
-          The result from calling handler(request).
+          The result from calling handler(request, servicer_context).
         """
     raise NotImplementedError()
 
@@ -144,7 +144,7 @@ class StreamServerInterceptor(six.with_metaclass(abc.ABCMeta)):
             interceptor's responsibility to call it.
 
         Returns:
-          The result from calling handler().
+          The result from calling handler(servicer_context).
         """
     raise NotImplementedError()
 

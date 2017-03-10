@@ -5,7 +5,48 @@ import logging
 import re
 
 from grpc_opentracing import grpcext
+from grpc_opentracing import OpenTracingServicerContext
 import opentracing
+
+
+class _OpenTracingServicerContext(OpenTracingServicerContext):
+
+  def __init__(self, servicer_context, active_span):
+    self._servicer_context = servicer_context
+    self._active_span = active_span
+
+  def is_active(self, *args, **kwargs):
+    return self._servicer_context.is_active(*args, **kwargs)
+
+  def time_remaining(self, *args, **kwargs):
+    return self._servicer_context.time_remaining(*args, **kwargs)
+
+  def cancel(self, *args, **kwargs):
+    return self._servicer_context.cancel(*args, **kwargs)
+
+  def add_callback(self, *args, **kwargs):
+    return self._servicer_context.add_callback(*args, **kwargs)
+
+  def invocation_metadata(self, *args, **kwargs):
+    return self._servicer_context.invocation_metadata(*args, **kwargs)
+
+  def peer(self, *args, **kwargs):
+    return self._servicer_context.peer(*args, **kwargs)
+
+  def send_initial_metadata(self, *args, **kwargs):
+    return self._servicer_context.send_initial_metadata(*args, **kwargs)
+
+  def set_trailing_metadata(self, *args, **kwargs):
+    return self._servicer_context.set_trailing_metadata(*args, **kwargs)
+
+  def set_code(self, *args, **kwargs):
+    return self._servicer_context.set_code(*args, **kwargs)
+
+  def set_details(self, *args, **kwargs):
+    return self._servicer_context.set_details(*args, **kwargs)
+
+  def get_active_span(self):
+    return self._active_span
 
 
 def _add_peer_tags(peer_str, tags):
@@ -60,7 +101,8 @@ class OpenTracingServerInterceptor(grpcext.UnaryServerInterceptor,
       if self._log_payloads:
         span.log_kv({'request': request})
       try:
-        response = handler(request)
+        response = handler(request,
+                           _OpenTracingServicerContext(servicer_context, span))
       except:
         e = sys.exc_info()[0]
         span.set_tag('error', True)
@@ -77,7 +119,7 @@ class OpenTracingServerInterceptor(grpcext.UnaryServerInterceptor,
     with _start_server_span(self._tracer, servicer_context,
                             server_info.full_method) as span:
       try:
-        result = handler()
+        result = handler(_OpenTracingServicerContext(servicer_context, span))
         for response in result:
           yield response
       except:
@@ -93,7 +135,7 @@ class OpenTracingServerInterceptor(grpcext.UnaryServerInterceptor,
     with _start_server_span(self._tracer, servicer_context,
                             server_info.full_method) as span:
       try:
-        return handler()
+        return handler(_OpenTracingServicerContext(servicer_context, span))
       except:
         e = sys.exc_info()[0]
         span.set_tag('error', True)

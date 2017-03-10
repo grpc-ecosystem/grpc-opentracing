@@ -29,11 +29,11 @@ class ServerInterceptor(grpcext.UnaryServerInterceptor,
 
   def intercept_unary(self, request, servicer_context, server_info, handler):
     self.intercepted = True
-    return handler(request)
+    return handler(request, servicer_context)
 
   def intercept_stream(self, servicer_context, server_info, handler):
     self.intercepted = True
-    return handler()
+    return handler(servicer_context)
 
 
 class InterceptorTest(unittest.TestCase):
