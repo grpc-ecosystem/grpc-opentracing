@@ -97,7 +97,6 @@ class OpenTracingServerInterceptor(grpcext.UnaryServerInterceptor,
   def intercept_unary(self, request, servicer_context, server_info, handler):
     with _start_server_span(self._tracer, servicer_context,
                             server_info.full_method) as span:
-      response = None
       if self._log_payloads:
         span.log_kv({'request': request})
       try:
