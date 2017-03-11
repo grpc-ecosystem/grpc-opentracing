@@ -2,12 +2,111 @@
 
 import sys
 import logging
+import time
 
 from six import iteritems
 
 import grpc
 from grpc_opentracing import grpcext
 import opentracing
+
+
+class _OpenTracingRendezvous(grpc.Future, grpc.Call):
+
+  def __init__(self, rendezvous, method, tracer, log_payloads):
+    self._rendezvous = rendezvous
+    self._method = method
+    self._tracer = tracer
+    self._log_payloads = log_payloads
+
+  def _start_span(self):
+    span_context = None
+    error = None
+
+    # The `trailing_metadata` method
+    #   http://www.grpc.io/grpc/python/grpc.html#grpc.Call.trailing_metadata
+    # can block. Since we want the span duration to reflect how long the
+    # invocation-side has spent waiting for a response, we thus record the
+    # time before calling `trailing_metadata` and use that as the starting time
+    # for the span
+    start_time = time.time()
+    metadata = self._rendezvous.trailing_metadata()
+    try:
+      if metadata:
+        span_context = self._tracer.extract(opentracing.Format.HTTP_HEADERS,
+                                            dict(metadata))
+    except (opentracing.UnsupportedFormatException,
+            opentracing.InvalidCarrierException,
+            opentracing.SpanContextCorruptedException) as e:
+      logging.exception('tracer.extract() failed')
+      error = e
+    tags = {'component': 'grpc', 'span.kind': 'client'}
+    references = None
+    if span_context is not None:
+      references = [opentracing.follows_from(span_context)]
+    span = self._tracer.start_span(
+        operation_name=self._method,
+        references=references,
+        tags=tags,
+        start_time=start_time)
+    if error is not None:
+      span.log_kv({'event': 'error', 'error.object': error})
+    return span
+
+  def cancel(self, *args, **kwargs):
+    return self._rendezvous.cancel(*args, **kwargs)
+
+  def cancelled(self, *args, **kwargs):
+    return self._rendezvous.cancelled(*args, **kwargs)
+
+  def running(self, *args, **kwargs):
+    return self._rendezvous.running(*args, **kwargs)
+
+  def done(self, *args, **kwargs):
+    return self._rendezvous.done(*args, **kwargs)
+
+  def result(self, timeout=None):
+    with self._start_span() as span:
+      try:
+        response = self._rendezvous.result(timeout)
+        if self._log_payloads:
+          span.log_kv({'response': response})
+        return response
+      except:
+        e = sys.exc_info()[0]
+        span.set_tag('error', True)
+        span.log_kv({'event': 'error', 'error.object': e})
+        raise
+
+  def exception(self, *args, **kwargs):
+    return self._rendezvous.exception(*args, **kwargs)
+
+  def traceback(self, *args, **kwargs):
+    return self._rendezvous.traceback(*args, **kwargs)
+
+  def add_callback(self, *args, **kwargs):
+    return self._rendezvous.add_callback(*args, **kwargs)
+
+  def add_done_callback(self, *args, **kwargs):
+    return self._rendezvous.add_done_callback(*args, **kwargs)
+
+  def is_active(self, *args, **kwargs):
+    return self._rendezvous.is_active(*args, **kwargs)
+
+  def time_remaining(self, *args, **kwargs):
+    return self._rendezvous.time_remaining(*args, **kwargs)
+
+  def initial_metadata(self, *args, **kwargs):
+    return self._rendezvous.initial_metadata(*args, **kwargs)
+
+  def trailing_metadata(self, *args, **kwargs):
+    return self._rendezvous.trailing_metadata(*args, **kwargs)
+
+  def code(self, *args, **kwargs):
+    return self._rendezvous.code(*args, **kwargs)
+
+  def details(self, *args, **kwargs):
+    return self._rendezvous.details(*args, **kwargs)
 
 
 def _inject_span_context(tracer, span, metadata):
@@ -57,8 +156,12 @@ class OpenTracingClientInterceptor(grpcext.UnaryClientInterceptor,
         span.set_tag('error', True)
         span.log_kv({'event': 'error', 'error.object': e})
         raise
-      # If the RPC is called asynchronously, don't log responses.
-      if self._log_payloads and not isinstance(result, grpc.Future):
+      # If the RPC is called asynchronously, wrap the future so that an
+      # additional span is created once it's realized.
+      if isinstance(result, grpc.Future):
+        return _OpenTracingRendezvous(result, method, self._tracer,
+                                      self._log_payloads)
+      elif self._log_payloads:
         response = result
         # Handle the case when the RPC is initiated via the with_call
         # method and the result is a tuple with the first element as the
@@ -91,7 +194,14 @@ class OpenTracingClientInterceptor(grpcext.UnaryClientInterceptor,
     with self._start_span(client_info.full_method) as span:
       metadata = _inject_span_context(self._tracer, span, metadata)
       try:
-        return invoker(metadata)
+        result = invoker(metadata)
+        # If the RPC is called asynchronously, wrap the future so that an
+        # additional span is created once it's realized.
+        if isinstance(result, grpc.Future):
+          return _OpenTracingRendezvous(result, client_info.full_method,
+                                        self._tracer, False)
+        else:
+          return result
       except:
         e = sys.exc_info()[0]
         span.set_tag('error', True)

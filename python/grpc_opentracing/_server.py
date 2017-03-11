@@ -4,6 +4,8 @@ import sys
 import logging
 import re
 
+from six import iteritems
+
 from grpc_opentracing import grpcext
 from grpc_opentracing import OpenTracingServicerContext
 import opentracing
@@ -11,9 +13,10 @@ import opentracing
 
 class _OpenTracingServicerContext(OpenTracingServicerContext):
 
-  def __init__(self, servicer_context, active_span):
+  def __init__(self, servicer_context, active_span, trailing_metadata=None):
     self._servicer_context = servicer_context
     self._active_span = active_span
+    self._trailing_metadata = trailing_metadata
 
   def is_active(self, *args, **kwargs):
     return self._servicer_context.is_active(*args, **kwargs)
@@ -36,8 +39,17 @@ class _OpenTracingServicerContext(OpenTracingServicerContext):
   def send_initial_metadata(self, *args, **kwargs):
     return self._servicer_context.send_initial_metadata(*args, **kwargs)
 
-  def set_trailing_metadata(self, *args, **kwargs):
-    return self._servicer_context.set_trailing_metadata(*args, **kwargs)
+  def set_trailing_metadata(self, trailing_metadata):
+    # In some situations, the servicer-side may send its span context back as
+    # trailing metadata. If other code on the servicer-side is also setting
+    # trailing metadata, we need to intercept and append the initial trailing
+    # metadata so that it doesn't get overwritten.
+    if self._trailing_metadata is None:
+      return self._servicer_context.set_trailing_metadata(trailing_metadata)
+    trailing_metadata = tuple(
+        trailing_metadata) if trailing_metadata is not None else ()
+    trailing_metadata = self._trailing_metadata + trailing_metadata
+    return self._servicer_context.set_trailing_metadata(trailing_metadata)
 
   def set_code(self, *args, **kwargs):
     return self._servicer_context.set_code(*args, **kwargs)
@@ -63,6 +75,21 @@ def _add_peer_tags(peer_str, tags):
     tags['peer.port'] = match.group('port')
     return
   logging.warning('unrecognized peer: %s', peer_str)
+
+
+def _inject_span_context(tracer, span, servicer_context):
+  headers = {}
+  try:
+    tracer.inject(span.context, opentracing.Format.HTTP_HEADERS, headers)
+  except (opentracing.UnsupportedFormatException,
+          opentracing.InvalidCarrierException,
+          opentracing.SpanContextCorruptedException) as e:
+    logging.exception('tracer.inject() failed')
+    span.log_kv({'event': 'error', 'error.object': e})
+    return None
+  metadata = tuple(iteritems(headers))
+  servicer_context.set_trailing_metadata(metadata)
+  return metadata
 
 
 def _start_server_span(tracer, servicer_context, method):
@@ -100,8 +127,14 @@ class OpenTracingServerInterceptor(grpcext.UnaryServerInterceptor,
       if self._log_payloads:
         span.log_kv({'request': request})
       try:
+        # The invocation-side may have invoked this RPC asynchronously; in which
+        # case, it may want to reference the servicer-side's span context, so
+        # we send it back in the trailing_metadata
+        trailing_metadata = _inject_span_context(self._tracer, span,
+                                                 servicer_context)
         response = handler(request,
-                           _OpenTracingServicerContext(servicer_context, span))
+                           _OpenTracingServicerContext(servicer_context, span,
+                                                       trailing_metadata))
       except:
         e = sys.exc_info()[0]
         span.set_tag('error', True)
@@ -134,7 +167,14 @@ class OpenTracingServerInterceptor(grpcext.UnaryServerInterceptor,
     with _start_server_span(self._tracer, servicer_context,
                             server_info.full_method) as span:
       try:
-        return handler(_OpenTracingServicerContext(servicer_context, span))
+        # The invocation-side may have invoked this RPC asynchronously; in which
+        # case, it may want to reference the servicer-side's span context, so
+        # we send it back in the trailing_metadata
+        trailing_metadata = _inject_span_context(self._tracer, span,
+                                                 servicer_context)
+        return handler(
+            _OpenTracingServicerContext(servicer_context, span,
+                                        trailing_metadata))
       except:
         e = sys.exc_info()[0]
         span.set_tag('error', True)
