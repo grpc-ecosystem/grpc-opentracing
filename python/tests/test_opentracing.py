@@ -2,12 +2,13 @@ import unittest
 
 import grpc
 
-from _service import Service
+from _service import Service, ErroringHandler
 from _tracer import Tracer, SpanRelationship
 from grpc_opentracing import open_tracing_client_interceptor, open_tracing_server_interceptor
 
 
 class OpenTracingTest(unittest.TestCase):
+  """Test that tracers create the correct spans when RPC calls are invoked."""
 
   def setUp(self):
     self._tracer = Tracer()
@@ -132,3 +133,99 @@ class OpenTracingTest(unittest.TestCase):
 
     self.assertEqual(
         self._tracer.get_relationship(0, 1), SpanRelationship.CHILD_OF)
+
+
+class OpenTracingErroringTest(unittest.TestCase):
+  """Test that tracer spans set the error tag when erroring RPC are invoked."""
+
+  def setUp(self):
+    self._tracer = Tracer()
+    self._service = Service([open_tracing_client_interceptor(self._tracer)],
+                            [open_tracing_server_interceptor(self._tracer)],
+                            ErroringHandler())
+
+  def testUnaryUnaryOpenTracing(self):
+    multi_callable = self._service.unary_unary_multi_callable
+    request = b'\x01'
+    self.assertRaises(grpc.RpcError, multi_callable, request)
+
+    span0 = self._tracer.get_span(0)
+    self.assertIsNotNone(span0)
+    self.assertTrue(span0.get_tag('error'))
+
+    span1 = self._tracer.get_span(1)
+    self.assertIsNotNone(span1)
+    # TODO
+    # self.assertTrue(span1.get_tag('error'))
+
+  def testUnaryUnaryOpenTracingWithCall(self):
+    multi_callable = self._service.unary_unary_multi_callable
+    request = b'\x01'
+    self.assertRaises(grpc.RpcError, multi_callable.with_call, request)
+
+    span0 = self._tracer.get_span(0)
+    self.assertIsNotNone(span0)
+    self.assertTrue(span0.get_tag('error'))
+
+    span1 = self._tracer.get_span(1)
+    self.assertIsNotNone(span1)
+    # TODO
+    # self.assertTrue(span1.get_tag('error'))
+
+  def testUnaryStreamOpenTracing(self):
+    multi_callable = self._service.unary_stream_multi_callable
+    request = b'\x01'
+    response = multi_callable(request)
+    self.assertRaises(grpc.RpcError, list, response)
+
+    span0 = self._tracer.get_span(0)
+    self.assertIsNotNone(span0)
+    self.assertTrue(span0.get_tag('error'))
+
+    span1 = self._tracer.get_span(1)
+    self.assertIsNotNone(span1)
+    # TODO
+    # self.assertTrue(span1.get_tag('error'))
+
+  def testStreamUnaryOpenTracing(self):
+    multi_callable = self._service.stream_unary_multi_callable
+    requests = [b'\x01', b'\x02']
+    self.assertRaises(grpc.RpcError, multi_callable, iter(requests))
+
+    span0 = self._tracer.get_span(0)
+    self.assertIsNotNone(span0)
+    self.assertTrue(span0.get_tag('error'))
+
+    span1 = self._tracer.get_span(1)
+    self.assertIsNotNone(span1)
+    # TODO
+    # self.assertTrue(span1.get_tag('error'))
+
+  def testStreamUnaryOpenTracingWithCall(self):
+    multi_callable = self._service.stream_unary_multi_callable
+    requests = [b'\x01', b'\x02']
+    self.assertRaises(grpc.RpcError, multi_callable.with_call, iter(requests))
+
+    span0 = self._tracer.get_span(0)
+    self.assertIsNotNone(span0)
+    self.assertTrue(span0.get_tag('error'))
+
+    span1 = self._tracer.get_span(1)
+    self.assertIsNotNone(span1)
+    # TODO
+    # self.assertTrue(span1.get_tag('error'))
+
+  def testStreamStreamOpenTracing(self):
+    multi_callable = self._service.stream_stream_multi_callable
+    requests = [b'\x01', b'\x02']
+    response = multi_callable(iter(requests))
+    self.assertRaises(grpc.RpcError, list, response)
+
+    span0 = self._tracer.get_span(0)
+    self.assertIsNotNone(span0)
+    self.assertTrue(span0.get_tag('error'))
+
+    span1 = self._tracer.get_span(1)
+    self.assertIsNotNone(span1)
+    # TODO
+    # self.assertTrue(span1.get_tag('error'))

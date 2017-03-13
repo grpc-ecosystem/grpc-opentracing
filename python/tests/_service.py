@@ -36,7 +36,7 @@ class _MethodHandler(grpc.RpcMethodHandler):
     self.stream_stream = stream_stream
 
 
-class _Handler(object):
+class Handler(object):
 
   def handle_unary_unary(self, request, servicer_context):
     return request
@@ -53,13 +53,40 @@ class _Handler(object):
       yield request
 
 
+def _set_error_code(servicer_context):
+  servicer_context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
+  servicer_context.set_details('ErroringHandler')
+
+
+class ErroringHandler(Handler):
+
+  def handle_unary_unary(self, request, servicer_context):
+    _set_error_code(servicer_context)
+    return super(ErroringHandler, self).handle_unary_unary(request,
+                                                           servicer_context)
+
+  def handle_unary_stream(self, request, servicer_context):
+    _set_error_code(servicer_context)
+    return super(ErroringHandler, self).handle_unary_stream(request,
+                                                            servicer_context)
+
+  def handle_stream_unary(self, request_iterator, servicer_context):
+    _set_error_code(servicer_context)
+    return super(ErroringHandler, self).handle_stream_unary(request_iterator,
+                                                            servicer_context)
+
+  def handle_stream_stream(self, request_iterator, servicer_context):
+    _set_error_code(servicer_context)
+    return super(ErroringHandler, self).handle_stream_stream(request_iterator,
+                                                             servicer_context)
+
+
 class _GenericHandler(grpc.GenericRpcHandler):
 
   def __init__(self, handler):
     self._handler = handler
 
   def service(self, handler_call_details):
-    print 'servicing: ', handler_call_details.method
     method = handler_call_details.method
     if method == _UNARY_UNARY:
       return _MethodHandler(unary_unary=self._handler.handle_unary_unary)
@@ -82,8 +109,11 @@ class _GenericHandler(grpc.GenericRpcHandler):
 
 class Service(object):
 
-  def __init__(self, client_interceptors, server_interceptors):
-    self.handler = _Handler()
+  def __init__(self,
+               client_interceptors,
+               server_interceptors,
+               handler=Handler()):
+    self.handler = handler
     self._server_pool = logging_pool.pool(2)
     self._server = grpcext.intercept_server(
         grpc.server(self._server_pool), *server_interceptors)

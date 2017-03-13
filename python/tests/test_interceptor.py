@@ -37,6 +37,7 @@ class ServerInterceptor(grpcext.UnaryServerInterceptor,
 
 
 class InterceptorTest(unittest.TestCase):
+  """Test that RPC calls are intercepted."""
 
   def setUp(self):
     self._client_interceptor = ClientInterceptor()
@@ -132,6 +133,7 @@ class InterceptorTest(unittest.TestCase):
 
 
 class MultiInterceptorTest(unittest.TestCase):
+  """Test that you can chain multiple interceptors together."""
 
   def setUp(self):
     self._client_interceptors = [ClientInterceptor(), ClientInterceptor()]
