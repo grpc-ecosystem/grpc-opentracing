@@ -12,7 +12,7 @@ import grpc
 from concurrent import futures
 import lightstep
 
-from grpc_opentracing import open_tracing_server_interceptor
+from grpc_opentracing import open_tracing_server_interceptor, ServerRequestAttribute
 from grpc_opentracing.grpcext import intercept_server
 
 import store_pb2
@@ -73,6 +73,10 @@ def serve():
       '--log_payloads',
       action='store_true',
       help='log request/response objects to open-tracing spans')
+  parser.add_argument(
+      '--include_grpc_tags',
+      action='store_true',
+      help='set gRPC-specific tags on spans')
   args = parser.parse_args()
   if not args.access_token:
     print('You must specify access_token')
@@ -80,10 +84,17 @@ def serve():
 
   tracer = lightstep.Tracer(
       component_name='store-server', access_token=args.access_token)
-  server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-
+  traced_attributes = []
+  if args.include_grpc_tags:
+    traced_attributes = [
+        ServerRequestAttribute.HEADERS, ServerRequestAttribute.METHOD_TYPE,
+        ServerRequestAttribute.METHOD_NAME
+    ]
   tracer_interceptor = open_tracing_server_interceptor(
-      tracer, log_payloads=args.log_payloads)
+      tracer,
+      log_payloads=args.log_payloads,
+      traced_attributes=traced_attributes)
+  server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
   server = intercept_server(server, tracer_interceptor)
 
   store_pb2.add_StoreServicer_to_server(Store(), server)

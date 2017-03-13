@@ -7,7 +7,8 @@ import time
 from six import iteritems
 
 import grpc
-from grpc_opentracing import grpcext
+from grpc_opentracing import grpcext, ClientRequestAttribute
+from grpc_opentracing._utilities import get_method_type
 import opentracing
 
 
@@ -126,26 +127,36 @@ def _inject_span_context(tracer, span, metadata):
 class OpenTracingClientInterceptor(grpcext.UnaryClientInterceptor,
                                    grpcext.StreamClientInterceptor):
 
-  def __init__(self, tracer, active_span_source, log_payloads):
+  def __init__(self, tracer, active_span_source, log_payloads,
+               traced_attributes):
     self._tracer = tracer
     self._active_span_source = active_span_source
     self._log_payloads = log_payloads
+    self._traced_attributes = traced_attributes
 
-  def _start_span(self, method):
+  def _start_span(self, method, metadata, is_client_stream, is_server_stream):
     active_span_context = None
     if self._active_span_source is not None:
       active_span = self._active_span_source.get_active_span()
       if active_span is not None:
         active_span_context = active_span.context
-    # TODO: add peer.hostname, peer.ipv4, and other RPC fields that are
-    # mentioned on
-    # https://github.com/opentracing/specification/blob/master/semantic_conventions.md
     tags = {'component': 'grpc', 'span.kind': 'client'}
+    for traced_attribute in self._traced_attributes:
+      if traced_attribute == ClientRequestAttribute.HEADERS:
+        tags['grpc.headers'] = str(metadata)
+      elif traced_attribute == ClientRequestAttribute.METHOD_TYPE:
+        tags['grpc.method_type'] = get_method_type(is_client_stream,
+                                                   is_server_stream)
+      elif traced_attribute == ClientRequestAttribute.METHOD_NAME:
+        tags['grpc.method_name'] = method
+      else:
+        logging.warning('OpenTracing Attribute \"%s\" is not supported',
+                        str(traced_attribute))
     return self._tracer.start_span(
         operation_name=method, child_of=active_span_context, tags=tags)
 
   def intercept_unary(self, method, request, metadata, invoker):
-    with self._start_span(method) as span:
+    with self._start_span(method, metadata, False, False) as span:
       metadata = _inject_span_context(self._tracer, span, metadata)
       if self._log_payloads:
         span.log_kv({'request': request})
@@ -157,7 +168,7 @@ class OpenTracingClientInterceptor(grpcext.UnaryClientInterceptor,
         span.log_kv({'event': 'error', 'error.object': e})
         raise
       # If the RPC is called asynchronously, wrap the future so that an
-      # additional span is created once it's realized.
+      # additional span can be created once it's realized.
       if isinstance(result, grpc.Future):
         return _OpenTracingRendezvous(result, method, self._tracer,
                                       self._log_payloads)
@@ -176,7 +187,8 @@ class OpenTracingClientInterceptor(grpcext.UnaryClientInterceptor,
   # the span across the generated responses and detect any errors, we wrap the
   # result in a new generator that yields the response values.
   def _intercept_server_stream(self, metadata, client_info, invoker):
-    with self._start_span(client_info.full_method) as span:
+    with self._start_span(client_info.full_method, metadata,
+                          client_info.is_client_stream, True) as span:
       metadata = _inject_span_context(self._tracer, span, metadata)
       try:
         result = invoker(metadata)
@@ -191,7 +203,8 @@ class OpenTracingClientInterceptor(grpcext.UnaryClientInterceptor,
   def intercept_stream(self, metadata, client_info, invoker):
     if client_info.is_server_stream:
       return self._intercept_server_stream(metadata, client_info, invoker)
-    with self._start_span(client_info.full_method) as span:
+    with self._start_span(client_info.full_method, metadata,
+                          client_info.is_client_stream, False) as span:
       metadata = _inject_span_context(self._tracer, span, metadata)
       try:
         result = invoker(metadata)

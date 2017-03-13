@@ -8,7 +8,7 @@ from builtins import input
 import grpc
 import lightstep
 
-from grpc_opentracing import open_tracing_client_interceptor
+from grpc_opentracing import open_tracing_client_interceptor, ClientRequestAttribute
 from grpc_opentracing.grpcext import intercept_channel
 
 import store_pb2
@@ -153,6 +153,10 @@ def run():
       '--log_payloads',
       action='store_true',
       help='log request/response objects to open-tracing spans')
+  parser.add_argument(
+      '--include_grpc_tags',
+      action='store_true',
+      help='set gRPC-specific tags on spans')
   args = parser.parse_args()
   if not args.access_token:
     print('You must specify access_token')
@@ -160,8 +164,16 @@ def run():
 
   tracer = lightstep.Tracer(
       component_name='store-client', access_token=args.access_token)
+  traced_attributes = []
+  if args.include_grpc_tags:
+    traced_attributes = [
+        ClientRequestAttribute.HEADERS, ClientRequestAttribute.METHOD_TYPE,
+        ClientRequestAttribute.METHOD_NAME
+    ]
   tracer_interceptor = open_tracing_client_interceptor(
-      tracer, log_payloads=args.log_payloads)
+      tracer,
+      log_payloads=args.log_payloads,
+      traced_attributes=traced_attributes)
   channel = grpc.insecure_channel('localhost:50051')
   channel = intercept_channel(channel, tracer_interceptor)
   stub = store_pb2.StoreStub(channel)

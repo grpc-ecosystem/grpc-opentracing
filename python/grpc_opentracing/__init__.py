@@ -1,4 +1,5 @@
 import abc
+import enum
 
 import six
 
@@ -17,9 +18,38 @@ class ActiveSpanSource(six.with_metaclass(abc.ABCMeta)):
         """
 
 
+@enum.unique
+class ClientRequestAttribute(enum.Enum):
+  """Optional tracing tags available on the client-side.
+
+  Attributes:
+    HEADERS: The initial :term:`metadata`.
+    METHOD_TYPE: Type of the method invoked.
+    METHOD_NAME: Name of the method invoked.
+  """
+  HEADERS = 0
+  METHOD_TYPE = 1
+  METHOD_NAME = 2
+
+
+@enum.unique
+class ServerRequestAttribute(enum.Enum):
+  """Optional tracing tags available on the server-side.
+
+  Attributes:
+    HEADERS: The initial :term:`metadata`.
+    METHOD_TYPE: Type of the method invoked.
+    METHOD_NAME: Name of the method invoked.
+  """
+  HEADERS = 0
+  METHOD_TYPE = 1
+  METHOD_NAME = 2
+
+
 def open_tracing_client_interceptor(tracer,
                                     active_span_source=None,
-                                    log_payloads=False):
+                                    log_payloads=False,
+                                    traced_attributes=None):
   """Creates a client-side interceptor that can be use with gRPC to add
          OpenTracing information.
 
@@ -33,11 +63,17 @@ def open_tracing_client_interceptor(tracer,
       A client-side interceptor object.
     """
   from grpc_opentracing import _client
+  if traced_attributes is None:
+    traced_attributes = set()
+  else:
+    traced_attributes = set(traced_attributes)
   return _client.OpenTracingClientInterceptor(tracer, active_span_source,
-                                              log_payloads)
+                                              log_payloads, traced_attributes)
 
 
-def open_tracing_server_interceptor(tracer, log_payloads=False):
+def open_tracing_server_interceptor(tracer,
+                                    log_payloads=False,
+                                    traced_attributes=None):
   """Creates a server-side interceptor that can be use with gRPC to add
          OpenTracing information.
 
@@ -49,10 +85,16 @@ def open_tracing_server_interceptor(tracer, log_payloads=False):
       A server-side interceptor object.
     """
   from grpc_opentracing import _server
-  return _server.OpenTracingServerInterceptor(tracer, log_payloads)
+  if traced_attributes is None:
+    traced_attributes = set()
+  else:
+    traced_attributes = set(traced_attributes)
+  return _server.OpenTracingServerInterceptor(tracer, log_payloads,
+                                              traced_attributes)
 
 
 ###################################  __all__  #################################
 
-__all__ = ('ActiveSpanSource', 'open_tracing_client_interceptor',
+__all__ = ('ActiveSpanSource', 'ClientRequestAttribute',
+           'ServerRequestAttribute', 'open_tracing_client_interceptor',
            'open_tracing_server_interceptor',)

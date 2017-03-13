@@ -7,7 +7,8 @@ import re
 from six import iteritems
 
 import grpc
-from grpc_opentracing import grpcext, ActiveSpanSource
+from grpc_opentracing import grpcext, ActiveSpanSource, ServerRequestAttribute
+from grpc_opentracing._utilities import get_method_type
 import opentracing
 
 
@@ -51,11 +52,11 @@ class _OpenTracingServicerContext(grpc.ServicerContext, ActiveSpanSource):
     trailing_metadata = self._trailing_metadata + trailing_metadata
     return self._servicer_context.set_trailing_metadata(trailing_metadata)
 
-  def set_code(self, *args, **kwargs):
-    return self._servicer_context.set_code(*args, **kwargs)
+  def set_code(self, code):
+    return self._servicer_context.set_code(code)
 
-  def set_details(self, *args, **kwargs):
-    return self._servicer_context.set_details(*args, **kwargs)
+  def set_details(self, details):
+    return self._servicer_context.set_details(details)
 
   def get_active_span(self):
     return self._active_span
@@ -74,7 +75,7 @@ def _add_peer_tags(peer_str, tags):
     tags['peer.ipv6'] = match.group('address')
     tags['peer.port'] = match.group('port')
     return
-  logging.warning('unrecognized peer: %s', peer_str)
+  logging.warning('Unrecognized peer: \"%s\"', peer_str)
 
 
 def _inject_span_context(tracer, span, servicer_context):
@@ -92,38 +93,50 @@ def _inject_span_context(tracer, span, servicer_context):
   return metadata
 
 
-def _start_server_span(tracer, servicer_context, method):
-  span_context = None
-  error = None
-  metadata = servicer_context.invocation_metadata()
-  try:
-    if metadata:
-      span_context = tracer.extract(opentracing.Format.HTTP_HEADERS,
-                                    dict(metadata))
-  except (opentracing.UnsupportedFormatException,
-          opentracing.InvalidCarrierException,
-          opentracing.SpanContextCorruptedException) as e:
-    logging.exception('tracer.extract() failed')
-    error = e
-  tags = {'component': 'grpc', 'span.kind': 'server'}
-  _add_peer_tags(servicer_context.peer(), tags)
-  span = tracer.start_span(
-      operation_name=method, child_of=span_context, tags=tags)
-  if error is not None:
-    span.log_kv({'event': 'error', 'error.object': error})
-  return span
-
-
 class OpenTracingServerInterceptor(grpcext.UnaryServerInterceptor,
                                    grpcext.StreamServerInterceptor):
 
-  def __init__(self, tracer, log_payloads):
+  def __init__(self, tracer, log_payloads, traced_attributes):
     self._tracer = tracer
     self._log_payloads = log_payloads
+    self._traced_attributes = traced_attributes
+
+  def _start_span(self, servicer_context, method, is_client_stream,
+                  is_server_stream):
+    span_context = None
+    error = None
+    metadata = servicer_context.invocation_metadata()
+    try:
+      if metadata:
+        span_context = self._tracer.extract(opentracing.Format.HTTP_HEADERS,
+                                            dict(metadata))
+    except (opentracing.UnsupportedFormatException,
+            opentracing.InvalidCarrierException,
+            opentracing.SpanContextCorruptedException) as e:
+      logging.exception('tracer.extract() failed')
+      error = e
+    tags = {'component': 'grpc', 'span.kind': 'server'}
+    _add_peer_tags(servicer_context.peer(), tags)
+    for traced_attribute in self._traced_attributes:
+      if traced_attribute == ServerRequestAttribute.HEADERS:
+        tags['grpc.headers'] = str(metadata)
+      elif traced_attribute == ServerRequestAttribute.METHOD_TYPE:
+        tags['grpc.method_type'] = get_method_type(is_client_stream,
+                                                   is_server_stream)
+      elif traced_attribute == ServerRequestAttribute.METHOD_NAME:
+        tags['grpc.method_name'] = method
+      else:
+        logging.warning('OpenTracing Attribute \"%s\" is not supported',
+                        str(traced_attribute))
+    span = self._tracer.start_span(
+        operation_name=method, child_of=span_context, tags=tags)
+    if error is not None:
+      span.log_kv({'event': 'error', 'error.object': error})
+    return span
 
   def intercept_unary(self, request, servicer_context, server_info, handler):
-    with _start_server_span(self._tracer, servicer_context,
-                            server_info.full_method) as span:
+    with self._start_span(servicer_context, server_info.full_method, False,
+                          False) as span:
       if self._log_payloads:
         span.log_kv({'request': request})
       try:
@@ -148,8 +161,8 @@ class OpenTracingServerInterceptor(grpcext.UnaryServerInterceptor,
   # the span across the generated responses and detect any errors, we wrap the
   # result in a new generator that yields the response values.
   def _intercept_server_stream(self, servicer_context, server_info, handler):
-    with _start_server_span(self._tracer, servicer_context,
-                            server_info.full_method) as span:
+    with self._start_span(servicer_context, server_info.full_method,
+                          server_info.is_client_stream, True) as span:
       try:
         result = handler(_OpenTracingServicerContext(servicer_context, span))
         for response in result:
@@ -164,8 +177,8 @@ class OpenTracingServerInterceptor(grpcext.UnaryServerInterceptor,
     if server_info.is_server_stream:
       return self._intercept_server_stream(servicer_context, server_info,
                                            handler)
-    with _start_server_span(self._tracer, servicer_context,
-                            server_info.full_method) as span:
+    with self._start_span(servicer_context, server_info.full_method,
+                          server_info.is_client_stream, False) as span:
       try:
         # The invocation-side may have invoked this RPC asynchronously; in which
         # case, it may want to reference the servicer-side's span context, so
