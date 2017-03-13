@@ -6,12 +6,12 @@ import re
 
 from six import iteritems
 
-from grpc_opentracing import grpcext
-from grpc_opentracing import OpenTracingServicerContext
+import grpc
+from grpc_opentracing import grpcext, ActiveSpanSource
 import opentracing
 
 
-class _OpenTracingServicerContext(OpenTracingServicerContext):
+class _OpenTracingServicerContext(grpc.ServicerContext, ActiveSpanSource):
 
   def __init__(self, servicer_context, active_span, trailing_metadata=None):
     self._servicer_context = servicer_context
