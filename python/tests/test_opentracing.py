@@ -155,8 +155,7 @@ class OpenTracingErroringTest(unittest.TestCase):
 
     span1 = self._tracer.get_span(1)
     self.assertIsNotNone(span1)
-    # TODO
-    # self.assertTrue(span1.get_tag('error'))
+    self.assertTrue(span1.get_tag('error'))
 
   def testUnaryUnaryOpenTracingWithCall(self):
     multi_callable = self._service.unary_unary_multi_callable
@@ -169,8 +168,7 @@ class OpenTracingErroringTest(unittest.TestCase):
 
     span1 = self._tracer.get_span(1)
     self.assertIsNotNone(span1)
-    # TODO
-    # self.assertTrue(span1.get_tag('error'))
+    self.assertTrue(span1.get_tag('error'))
 
   def testUnaryStreamOpenTracing(self):
     multi_callable = self._service.unary_stream_multi_callable
@@ -184,8 +182,7 @@ class OpenTracingErroringTest(unittest.TestCase):
 
     span1 = self._tracer.get_span(1)
     self.assertIsNotNone(span1)
-    # TODO
-    # self.assertTrue(span1.get_tag('error'))
+    self.assertTrue(span1.get_tag('error'))
 
   def testStreamUnaryOpenTracing(self):
     multi_callable = self._service.stream_unary_multi_callable
@@ -198,8 +195,7 @@ class OpenTracingErroringTest(unittest.TestCase):
 
     span1 = self._tracer.get_span(1)
     self.assertIsNotNone(span1)
-    # TODO
-    # self.assertTrue(span1.get_tag('error'))
+    self.assertTrue(span1.get_tag('error'))
 
   def testStreamUnaryOpenTracingWithCall(self):
     multi_callable = self._service.stream_unary_multi_callable
@@ -212,8 +208,7 @@ class OpenTracingErroringTest(unittest.TestCase):
 
     span1 = self._tracer.get_span(1)
     self.assertIsNotNone(span1)
-    # TODO
-    # self.assertTrue(span1.get_tag('error'))
+    self.assertTrue(span1.get_tag('error'))
 
   def testStreamStreamOpenTracing(self):
     multi_callable = self._service.stream_stream_multi_callable
@@ -227,5 +222,4 @@ class OpenTracingErroringTest(unittest.TestCase):
 
     span1 = self._tracer.get_span(1)
     self.assertIsNotNone(span1)
-    # TODO
-    # self.assertTrue(span1.get_tag('error'))
+    self.assertTrue(span1.get_tag('error'))
