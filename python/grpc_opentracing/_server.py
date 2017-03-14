@@ -8,7 +8,7 @@ from six import iteritems
 
 import grpc
 from grpc_opentracing import grpcext, ActiveSpanSource, ServerRequestAttribute
-from grpc_opentracing._utilities import get_method_type
+from grpc_opentracing._utilities import get_method_type, get_deadline_millis
 import opentracing
 
 
@@ -141,6 +141,9 @@ class OpenTracingServerInterceptor(grpcext.UnaryServerInterceptor,
                                                    is_server_stream)
       elif traced_attribute == ServerRequestAttribute.METHOD_NAME:
         tags['grpc.method_name'] = method
+      elif traced_attribute == ServerRequestAttribute.DEADLINE:
+        tags['grpc.deadline_millis'] = get_deadline_millis(
+            servicer_context.time_remaining())
       else:
         logging.warning('OpenTracing Attribute \"%s\" is not supported',
                         str(traced_attribute))

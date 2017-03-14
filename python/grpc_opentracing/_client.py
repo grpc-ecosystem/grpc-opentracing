@@ -8,7 +8,7 @@ from six import iteritems
 
 import grpc
 from grpc_opentracing import grpcext, ClientRequestAttribute
-from grpc_opentracing._utilities import get_method_type
+from grpc_opentracing._utilities import get_method_type, get_deadline_millis
 import opentracing
 
 
@@ -134,7 +134,8 @@ class OpenTracingClientInterceptor(grpcext.UnaryClientInterceptor,
     self._log_payloads = log_payloads
     self._traced_attributes = traced_attributes
 
-  def _start_span(self, method, metadata, is_client_stream, is_server_stream):
+  def _start_span(self, method, metadata, is_client_stream, is_server_stream,
+                  timeout):
     active_span_context = None
     if self._active_span_source is not None:
       active_span = self._active_span_source.get_active_span()
@@ -149,6 +150,8 @@ class OpenTracingClientInterceptor(grpcext.UnaryClientInterceptor,
                                                    is_server_stream)
       elif traced_attribute == ClientRequestAttribute.METHOD_NAME:
         tags['grpc.method_name'] = method
+      elif traced_attribute == ClientRequestAttribute.DEADLINE:
+        tags['grpc.deadline_millis'] = get_deadline_millis(timeout)
       else:
         logging.warning('OpenTracing Attribute \"%s\" is not supported',
                         str(traced_attribute))
@@ -156,8 +159,8 @@ class OpenTracingClientInterceptor(grpcext.UnaryClientInterceptor,
         operation_name=method, child_of=active_span_context, tags=tags)
 
   def intercept_unary(self, request, metadata, client_info, invoker):
-    with self._start_span(client_info.full_method, metadata, False,
-                          False) as span:
+    with self._start_span(client_info.full_method, metadata, False, False,
+                          client_info.timeout) as span:
       metadata = _inject_span_context(self._tracer, span, metadata)
       if self._log_payloads:
         span.log_kv({'request': request})
@@ -189,7 +192,8 @@ class OpenTracingClientInterceptor(grpcext.UnaryClientInterceptor,
   # result in a new generator that yields the response values.
   def _intercept_server_stream(self, metadata, client_info, invoker):
     with self._start_span(client_info.full_method, metadata,
-                          client_info.is_client_stream, True) as span:
+                          client_info.is_client_stream, True,
+                          client_info.timeout) as span:
       metadata = _inject_span_context(self._tracer, span, metadata)
       try:
         result = invoker(metadata)
@@ -205,7 +209,8 @@ class OpenTracingClientInterceptor(grpcext.UnaryClientInterceptor,
     if client_info.is_server_stream:
       return self._intercept_server_stream(metadata, client_info, invoker)
     with self._start_span(client_info.full_method, metadata,
-                          client_info.is_client_stream, False) as span:
+                          client_info.is_client_stream, False,
+                          client_info.timeout) as span:
       metadata = _inject_span_context(self._tracer, span, metadata)
       try:
         result = invoker(metadata)

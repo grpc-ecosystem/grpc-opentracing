@@ -26,6 +26,8 @@ class ClientRequestAttribute(enum.Enum):
     HEADERS: The initial :term:`metadata`.
     METHOD_TYPE: Type of the method invoked.
     METHOD_NAME: Name of the method invoked.
+    DEADLINE: The length of time in seconds to wait for the computation to
+      terminate or be cancelled.
   """
   HEADERS = 0
   METHOD_TYPE = 1
@@ -40,6 +42,8 @@ class ServerRequestAttribute(enum.Enum):
     HEADERS: The initial :term:`metadata`.
     METHOD_TYPE: Type of the method invoked.
     METHOD_NAME: Name of the method invoked.
+    DEADLINE: The length of time in seconds to wait for the computation to
+      terminate or be cancelled.
   """
   HEADERS = 0
   METHOD_TYPE = 1
