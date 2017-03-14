@@ -81,6 +81,21 @@ class ErroringHandler(Handler):
                                                              servicer_context)
 
 
+class ExceptionErroringHandler(Handler):
+
+  def handle_unary_unary(self, request, servicer_context):
+    raise IndexError()
+
+  def handle_unary_stream(self, request, servicer_context):
+    raise IndexError()
+
+  def handle_stream_unary(self, request_iterator, servicer_context):
+    raise IndexError()
+
+  def handle_stream_stream(self, request_iterator, servicer_context):
+    raise IndexError()
+
+
 class _GenericHandler(grpc.GenericRpcHandler):
 
   def __init__(self, handler):
