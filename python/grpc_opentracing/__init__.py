@@ -32,6 +32,7 @@ class ClientRequestAttribute(enum.Enum):
   HEADERS = 0
   METHOD_TYPE = 1
   METHOD_NAME = 2
+  DEADLINE = 3
 
 
 @enum.unique
@@ -48,6 +49,7 @@ class ServerRequestAttribute(enum.Enum):
   HEADERS = 0
   METHOD_TYPE = 1
   METHOD_NAME = 2
+  DEADLINE = 3
 
 
 def open_tracing_client_interceptor(tracer,

@@ -19,48 +19,49 @@ class CommandExecuter(object):
   def __init__(self, stub):
     self._stub = stub
 
-  def _execute_rpc(self, method, via, request_or_iterator):
+  def _execute_rpc(self, method, via, timeout, request_or_iterator):
     if via == 'future':
-      result = getattr(self._stub, method).future(request_or_iterator)
+      result = getattr(self._stub, method).future(request_or_iterator, timeout)
       return result.result()
     elif via == 'with_call':
-      return getattr(self._stub, method).with_call(request_or_iterator)[0]
+      return getattr(self._stub, method).with_call(request_or_iterator,
+                                                   timeout)[0]
     else:
-      return getattr(self._stub, method)(request_or_iterator)
+      return getattr(self._stub, method)(request_or_iterator, timeout)
 
-  def do_stock_item(self, via, arguments):
+  def do_stock_item(self, via, timeout, arguments):
     if len(arguments) != 1:
       print('must input a single item')
       return
     request = store_pb2.AddItemRequest(name=arguments[0])
-    self._execute_rpc('AddItem', via, request)
+    self._execute_rpc('AddItem', via, timeout, request)
 
-  def do_stock_items(self, via, arguments):
+  def do_stock_items(self, via, timeout, arguments):
     if not arguments:
       print('must input at least one item')
       return
     requests = [store_pb2.AddItemRequest(name=name) for name in arguments]
-    self._execute_rpc('AddItems', via, iter(requests))
+    self._execute_rpc('AddItems', via, timeout, iter(requests))
 
-  def do_sell_item(self, via, arguments):
+  def do_sell_item(self, via, timeout, arguments):
     if len(arguments) != 1:
       print('must input a single item')
       return
     request = store_pb2.RemoveItemRequest(name=arguments[0])
-    response = self._execute_rpc('RemoveItem', via, request)
+    response = self._execute_rpc('RemoveItem', via, timeout, request)
     if not response.was_successful:
       print('unable to sell')
 
-  def do_sell_items(self, via, arguments):
+  def do_sell_items(self, via, timeout, arguments):
     if not arguments:
       print('must input at least one item')
       return
     requests = [store_pb2.RemoveItemRequest(name=name) for name in arguments]
-    response = self._execute_rpc('RemoveItems', via, iter(requests))
+    response = self._execute_rpc('RemoveItems', via, timeout, iter(requests))
     if not response.was_successful:
       print('unable to sell')
 
-  def do_inventory(self, via, arguments):
+  def do_inventory(self, via, timeout, arguments):
     if arguments:
       print('inventory does not take any arguments')
       return
@@ -68,19 +69,19 @@ class CommandExecuter(object):
       print('inventory can only be called via functor')
       return
     request = store_pb2.Empty()
-    result = self._execute_rpc('ListInventory', via, request)
+    result = self._execute_rpc('ListInventory', via, timeout, request)
     for query in result:
       print(query.name, '\t', query.count)
 
-  def do_query_item(self, via, arguments):
+  def do_query_item(self, via, timeout, arguments):
     if len(arguments) != 1:
       print('must input a single item')
       return
     request = store_pb2.QueryItemRequest(name=arguments[0])
-    query = self._execute_rpc('QueryQuantity', via, request)
+    query = self._execute_rpc('QueryQuantity', via, timeout, request)
     print(query.name, '\t', query.count)
 
-  def do_query_items(self, via, arguments):
+  def do_query_items(self, via, timeout, arguments):
     if not arguments:
       print('must input at least one item')
       return
@@ -88,22 +89,29 @@ class CommandExecuter(object):
       print('query_items can only be called via functor')
       return
     requests = [store_pb2.QueryItemRequest(name=name) for name in arguments]
-    result = self._execute_rpc('QueryQuantities', via, iter(requests))
+    result = self._execute_rpc('QueryQuantities', via, timeout, iter(requests))
     for query in result:
       print(query.name, '\t', query.count)
 
 
 def execute_command(command_executer, command, arguments):
   via = 'functor'
-  if len(arguments) > 1 and arguments[0] == '--via':
-    via = arguments[1]
-    if via not in ('functor', 'with_call', 'future'):
-      print('invalid --via option')
-      return
-    arguments = arguments[2:]
+  timeout = None
+  for argument_index in xrange(0, len(arguments), 2):
+    argument = arguments[argument_index]
+    if argument == '--via' and argument_index + 1 < len(arguments):
+      if via not in ('functor', 'with_call', 'future'):
+        print('invalid --via option')
+        return
+      via = arguments[argument_index + 1]
+    elif argument == '--timeout' and argument_index + 1 < len(arguments):
+      timeout = float(arguments[argument_index + 1])
+    else:
+      arguments = arguments[argument_index:]
+      break
 
   try:
-    getattr(command_executer, 'do_' + command)(via, arguments)
+    getattr(command_executer, 'do_' + command)(via, timeout, arguments)
   except AttributeError:
     print('unknown command: \"%s\"' % command)
 
@@ -120,7 +128,8 @@ INSTRUCTIONS = \
     query_items    Query the inventory for one or more items.
 
 You can also optionally provide a --via argument to instruct the RPC to be
-initiated via either the functor, with_call, or future method.
+initiated via either the functor, with_call, or future method; or provide a
+--timeout argument to set a deadline for the RPC to be completed.
 
 Example:
     > stock_item apple
@@ -168,7 +177,7 @@ def run():
   if args.include_grpc_tags:
     traced_attributes = [
         ClientRequestAttribute.HEADERS, ClientRequestAttribute.METHOD_TYPE,
-        ClientRequestAttribute.METHOD_NAME
+        ClientRequestAttribute.METHOD_NAME, ClientRequestAttribute.DEADLINE
     ]
   tracer_interceptor = open_tracing_client_interceptor(
       tracer,

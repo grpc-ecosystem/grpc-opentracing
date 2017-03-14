@@ -88,7 +88,7 @@ def serve():
   if args.include_grpc_tags:
     traced_attributes = [
         ServerRequestAttribute.HEADERS, ServerRequestAttribute.METHOD_TYPE,
-        ServerRequestAttribute.METHOD_NAME
+        ServerRequestAttribute.METHOD_NAME, ServerRequestAttribute.DEADLINE
     ]
   tracer_interceptor = open_tracing_server_interceptor(
       tracer,
