@@ -140,8 +140,7 @@ class OpenTracingInteroperabilityClientTest(unittest.TestCase):
 
   def setUp(self):
     self._tracer = Tracer()
-    self._service = Service([open_tracing_client_interceptor(self._tracer)],
-                            [])
+    self._service = Service([open_tracing_client_interceptor(self._tracer)], [])
 
   def testUnaryUnaryOpenTracing(self):
     multi_callable = self._service.unary_unary_multi_callable
@@ -239,13 +238,36 @@ class OpenTracingInteroperabilityClientTest(unittest.TestCase):
     self.assertIsNone(span1)
 
 
+class OpenTracingMetadataTest(unittest.TestCase):
+  """Test that open-tracing doesn't interfere with passing metadata through the
+    RPC.
+  """
+
+  def setUp(self):
+    self._tracer = Tracer()
+    self._service = Service([open_tracing_client_interceptor(self._tracer)],
+                            [open_tracing_server_interceptor(self._tracer)])
+
+  def testInvocationMetadata(self):
+    multi_callable = self._service.unary_unary_multi_callable
+    request = b'\x01'
+    multi_callable(request, None, (('abc', '123'),))
+    self.assertIn(('abc', '123'), self._service.handler.invocation_metadata)
+
+  def testTrailingMetadata(self):
+    self._service.handler.trailing_metadata = (('abc', '123'),)
+    multi_callable = self._service.unary_unary_multi_callable
+    request = b'\x01'
+    future = multi_callable.future(request, None, (('abc', '123'),))
+    self.assertIn(('abc', '123'), future.trailing_metadata())
+
+
 class OpenTracingInteroperabilityServerTest(unittest.TestCase):
   """Test that a traced server can interoperate with a non-trace client."""
 
   def setUp(self):
     self._tracer = Tracer()
-    self._service = Service([],
-                            [open_tracing_server_interceptor(self._tracer)])
+    self._service = Service([], [open_tracing_server_interceptor(self._tracer)])
 
   def testUnaryUnaryOpenTracing(self):
     multi_callable = self._service.unary_unary_multi_callable
