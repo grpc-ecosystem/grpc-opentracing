@@ -155,8 +155,9 @@ class OpenTracingClientInterceptor(grpcext.UnaryClientInterceptor,
     return self._tracer.start_span(
         operation_name=method, child_of=active_span_context, tags=tags)
 
-  def intercept_unary(self, method, request, metadata, invoker):
-    with self._start_span(method, metadata, False, False) as span:
+  def intercept_unary(self, request, metadata, client_info, invoker):
+    with self._start_span(client_info.full_method, metadata, False,
+                          False) as span:
       metadata = _inject_span_context(self._tracer, span, metadata)
       if self._log_payloads:
         span.log_kv({'request': request})
@@ -170,8 +171,8 @@ class OpenTracingClientInterceptor(grpcext.UnaryClientInterceptor,
       # If the RPC is called asynchronously, wrap the future so that an
       # additional span can be created once it's realized.
       if isinstance(result, grpc.Future):
-        return _OpenTracingRendezvous(result, method, self._tracer,
-                                      self._log_payloads)
+        return _OpenTracingRendezvous(result, client_info.full_method,
+                                      self._tracer, self._log_payloads)
       elif self._log_payloads:
         response = result
         # Handle the case when the RPC is initiated via the with_call

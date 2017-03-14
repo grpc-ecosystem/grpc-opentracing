@@ -12,7 +12,7 @@ class ClientInterceptor(grpcext.UnaryClientInterceptor,
   def __init__(self):
     self.intercepted = False
 
-  def intercept_unary(self, method, request, metadata, invoker):
+  def intercept_unary(self, request, metadata, client_info, invoker):
     self.intercepted = True
     return invoker(request, metadata)
 

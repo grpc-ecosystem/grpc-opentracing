@@ -3,21 +3,35 @@ import abc
 import six
 
 
+class UnaryClientInfo(six.with_metaclass(abc.ABCMeta)):
+  """Consists of various information about a unary RPC on the client-side.
+
+    Attributes:
+      full_method: A string of the full RPC method, i.e.,
+        /package.service/method.
+      timeout: The length of time in seconds to wait for the computation to
+        terminate or be cancelled, or None if this method should block until
+        the computation is terminated or is cancelled no matter how long that
+        takes.
+    """
+
+
 class UnaryClientInterceptor(six.with_metaclass(abc.ABCMeta)):
   """Invokes custom code when a client-side, unary-unary RPC method is
       called.
     """
 
   @abc.abstractmethod
-  def intercept_unary(self, method, request, metadata, invoker):
+  def intercept_unary(self, request, metadata, client_info, invoker):
     """A function to be called when a client-side, unary-unary RPC method is
           invoked.
 
         Args:
-          method: A string of the fully qualified method name being called.
           request: The request value for the RPC.
           metadata: Optional :term:`metadata` to be transmitted to the
             service-side of the RPC.
+          client_info: A UnaryClientInfo containing various information about
+            the RPC.
           invoker:  The handler to complete the RPC on the client. It is the
             interceptor's responsibility to call it.
 
@@ -35,6 +49,10 @@ class StreamClientInfo(six.with_metaclass(abc.ABCMeta)):
         /package.service/method.
       is_client_stream: Indicates whether the RPC is client-streaming.
       is_server_stream: Indicates whether the RPC is server-streaming.
+      timeout: The length of time in seconds to wait for the computation to
+        terminate or be cancelled, or None if this method should block until
+        the computation is terminated or is cancelled no matter how long that
+        takes.
     """
 
 
