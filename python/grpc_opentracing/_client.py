@@ -208,15 +208,15 @@ class OpenTracingClientInterceptor(grpcext.UnaryClientInterceptor,
       metadata = _inject_span_context(self._tracer, span, metadata)
       try:
         result = invoker(metadata)
-        # If the RPC is called asynchronously, wrap the future so that an
-        # additional span is created once it's realized.
-        if isinstance(result, grpc.Future):
-          return _OpenTracingRendezvous(result, client_info.full_method,
-                                        self._tracer, False)
-        else:
-          return result
       except:
         e = sys.exc_info()[0]
         span.set_tag('error', True)
         span.log_kv({'event': 'error', 'error.object': e})
         raise
+      # If the RPC is called asynchronously, wrap the future so that an
+      # additional span can be created once it's realized.
+      if isinstance(result, grpc.Future):
+        return _OpenTracingRendezvous(result, client_info.full_method,
+                                      self._tracer, False)
+      else:
+        return result
