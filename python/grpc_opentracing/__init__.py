@@ -13,9 +13,9 @@ class ActiveSpanSource(six.with_metaclass(abc.ABCMeta)):
   def get_active_span(self):
     """Identifies the active span.
 
-        Returns:
-          An object that implements the opentracing.Span interface.
-        """
+    Returns:
+      An object that implements the opentracing.Span interface.
+    """
 
 
 @enum.unique
@@ -57,15 +57,15 @@ def open_tracing_client_interceptor(tracer,
   """Creates a client-side interceptor that can be use with gRPC to add
          OpenTracing information.
 
-    Args:
-      tracer: An object implmenting the opentracing.Tracer interface.
-      active_span_source: An optional ActiveSpanSource to customize how the
-        active span is determined.
-      log_payloads: Indicates whether requests should be logged.
+  Args:
+    tracer: An object implmenting the opentracing.Tracer interface.
+    active_span_source: An optional ActiveSpanSource to customize how the
+      active span is determined.
+    log_payloads: Indicates whether requests should be logged.
 
-    Returns:
-      A client-side interceptor object.
-    """
+  Returns:
+    A client-side interceptor object.
+  """
   from grpc_opentracing import _client
   if traced_attributes is None:
     traced_attributes = set()
@@ -81,13 +81,13 @@ def open_tracing_server_interceptor(tracer,
   """Creates a server-side interceptor that can be use with gRPC to add
          OpenTracing information.
 
-    Args:
-      tracer: An object implmenting the opentracing.Tracer interface.
-      log_payloads: Indicates whether requests should be logged.
+  Args:
+    tracer: An object implmenting the opentracing.Tracer interface.
+    log_payloads: Indicates whether requests should be logged.
 
-    Returns:
-      A server-side interceptor object.
-    """
+  Returns:
+    A server-side interceptor object.
+  """
   from grpc_opentracing import _server
   if traced_attributes is None:
     traced_attributes = set()
