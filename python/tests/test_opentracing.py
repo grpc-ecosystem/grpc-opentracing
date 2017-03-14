@@ -5,6 +5,7 @@ import grpc
 from _service import Service, ErroringHandler, ExceptionErroringHandler
 from _tracer import Tracer, SpanRelationship
 from grpc_opentracing import open_tracing_client_interceptor, open_tracing_server_interceptor
+import opentracing
 
 
 class OpenTracingTest(unittest.TestCase):
@@ -32,7 +33,35 @@ class OpenTracingTest(unittest.TestCase):
     self.assertEqual(span1.get_tag('span.kind'), 'server')
 
     self.assertEqual(
-        self._tracer.get_relationship(0, 1), SpanRelationship.CHILD_OF)
+        self._tracer.get_relationship(0, 1), opentracing.ReferenceType.CHILD_OF)
+
+  def testUnaryUnaryOpenTracingFuture(self):
+    multi_callable = self._service.unary_unary_multi_callable
+    request = b'\x01'
+    expected_response = self._service.handler.handle_unary_unary(request, None)
+    future = multi_callable.future(request)
+    response = future.result()
+
+    self.assertEqual(response, expected_response)
+
+    span0 = self._tracer.get_span(0)
+    self.assertIsNotNone(span0)
+    self.assertEqual(span0.get_tag('span.kind'), 'client')
+
+    span1 = self._tracer.get_span(1)
+    self.assertIsNotNone(span1)
+    self.assertEqual(span1.get_tag('span.kind'), 'server')
+
+    self.assertEqual(
+        self._tracer.get_relationship(0, 1), opentracing.ReferenceType.CHILD_OF)
+
+    span2 = self._tracer.get_span(2)
+    self.assertIsNotNone(span2)
+    self.assertTrue(span2.get_tag('span.kind'), 'client')
+
+    self.assertEqual(
+        self._tracer.get_relationship(1, 2),
+        opentracing.ReferenceType.FOLLOWS_FROM)
 
   def testUnaryUnaryOpenTracingWithCall(self):
     multi_callable = self._service.unary_unary_multi_callable
@@ -52,7 +81,7 @@ class OpenTracingTest(unittest.TestCase):
     self.assertEqual(span1.get_tag('span.kind'), 'server')
 
     self.assertEqual(
-        self._tracer.get_relationship(0, 1), SpanRelationship.CHILD_OF)
+        self._tracer.get_relationship(0, 1), opentracing.ReferenceType.CHILD_OF)
 
   def testUnaryStreamOpenTracing(self):
     multi_callable = self._service.unary_stream_multi_callable
@@ -71,7 +100,7 @@ class OpenTracingTest(unittest.TestCase):
     self.assertEqual(span1.get_tag('span.kind'), 'server')
 
     self.assertEqual(
-        self._tracer.get_relationship(0, 1), SpanRelationship.CHILD_OF)
+        self._tracer.get_relationship(0, 1), opentracing.ReferenceType.CHILD_OF)
 
   def testStreamUnaryOpenTracing(self):
     multi_callable = self._service.stream_unary_multi_callable
@@ -91,7 +120,7 @@ class OpenTracingTest(unittest.TestCase):
     self.assertEqual(span1.get_tag('span.kind'), 'server')
 
     self.assertEqual(
-        self._tracer.get_relationship(0, 1), SpanRelationship.CHILD_OF)
+        self._tracer.get_relationship(0, 1), opentracing.ReferenceType.CHILD_OF)
 
   def testStreamUnaryOpenTracingWithCall(self):
     multi_callable = self._service.stream_unary_multi_callable
@@ -112,7 +141,36 @@ class OpenTracingTest(unittest.TestCase):
     self.assertEqual(span1.get_tag('span.kind'), 'server')
 
     self.assertEqual(
-        self._tracer.get_relationship(0, 1), SpanRelationship.CHILD_OF)
+        self._tracer.get_relationship(0, 1), opentracing.ReferenceType.CHILD_OF)
+
+  def testStreamUnaryOpenTracingFuture(self):
+    multi_callable = self._service.stream_unary_multi_callable
+    requests = [b'\x01', b'\x02']
+    expected_response = self._service.handler.handle_stream_unary(
+        iter(requests), None)
+    result = multi_callable.future(iter(requests))
+    response = result.result()
+
+    self.assertEqual(response, expected_response)
+
+    span0 = self._tracer.get_span(0)
+    self.assertIsNotNone(span0)
+    self.assertEqual(span0.get_tag('span.kind'), 'client')
+
+    span1 = self._tracer.get_span(1)
+    self.assertIsNotNone(span1)
+    self.assertEqual(span1.get_tag('span.kind'), 'server')
+
+    self.assertEqual(
+        self._tracer.get_relationship(0, 1), opentracing.ReferenceType.CHILD_OF)
+
+    span2 = self._tracer.get_span(2)
+    self.assertIsNotNone(span2)
+    self.assertTrue(span2.get_tag('span.kind'), 'client')
+
+    self.assertEqual(
+        self._tracer.get_relationship(1, 2),
+        opentracing.ReferenceType.FOLLOWS_FROM)
 
   def testStreamStreamOpenTracing(self):
     multi_callable = self._service.stream_stream_multi_callable
@@ -132,7 +190,7 @@ class OpenTracingTest(unittest.TestCase):
     self.assertEqual(span1.get_tag('span.kind'), 'server')
 
     self.assertEqual(
-        self._tracer.get_relationship(0, 1), SpanRelationship.CHILD_OF)
+        self._tracer.get_relationship(0, 1), opentracing.ReferenceType.CHILD_OF)
 
 
 class OpenTracingInteroperabilityClientTest(unittest.TestCase):

@@ -39,7 +39,7 @@ class Tracer(opentracing.Tracer):
     super(Tracer, self).__init__()
     self._counter = 0
     self._spans = {}
-    self._relationships = defaultdict(lambda: SpanRelationship.NONE)
+    self._relationships = defaultdict(lambda: None)
 
   def start_span(self,
                  operation_name=None,
@@ -51,7 +51,12 @@ class Tracer(opentracing.Tracer):
     self._counter += 1
     if child_of is not None:
       self._relationships[(child_of.identity,
-                           identity)] = SpanRelationship.CHILD_OF
+                           identity)] = opentracing.ReferenceType.CHILD_OF
+    if references is not None:
+      assert child_of is None and len(
+          references) == 1, 'Only a single reference is supported'
+      reference_type, span_context = references[0]
+      self._relationships[(span_context.identity, identity)] = reference_type
     span = _Span(self, identity, tags)
     self._spans[identity] = span
     return span
