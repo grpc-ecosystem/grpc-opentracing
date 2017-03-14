@@ -20,7 +20,7 @@ class ActiveSpanSource(six.with_metaclass(abc.ABCMeta)):
 
 @enum.unique
 class ClientRequestAttribute(enum.Enum):
-  """Optional tracing tags available on the client-side.
+  """Optional tracing tags available on the invocation-side.
 
   Attributes:
     HEADERS: The initial :term:`metadata`.
@@ -36,7 +36,7 @@ class ClientRequestAttribute(enum.Enum):
 
 @enum.unique
 class ServerRequestAttribute(enum.Enum):
-  """Optional tracing tags available on the server-side.
+  """Optional tracing tags available on the service-side.
 
   Attributes:
     HEADERS: The initial :term:`metadata`.
@@ -54,8 +54,8 @@ def open_tracing_client_interceptor(tracer,
                                     active_span_source=None,
                                     log_payloads=False,
                                     traced_attributes=None):
-  """Creates a client-side interceptor that can be use with gRPC to add
-         OpenTracing information.
+  """Creates an invocation-side interceptor that can be use with gRPC to add
+    OpenTracing information.
 
   Args:
     tracer: An object implmenting the opentracing.Tracer interface.
@@ -64,7 +64,7 @@ def open_tracing_client_interceptor(tracer,
     log_payloads: Indicates whether requests should be logged.
 
   Returns:
-    A client-side interceptor object.
+    An invocation-side interceptor object.
   """
   from grpc_opentracing import _client
   if traced_attributes is None:
@@ -78,15 +78,15 @@ def open_tracing_client_interceptor(tracer,
 def open_tracing_server_interceptor(tracer,
                                     log_payloads=False,
                                     traced_attributes=None):
-  """Creates a server-side interceptor that can be use with gRPC to add
-         OpenTracing information.
+  """Creates a service-side interceptor that can be use with gRPC to add
+    OpenTracing information.
 
   Args:
     tracer: An object implmenting the opentracing.Tracer interface.
     log_payloads: Indicates whether requests should be logged.
 
   Returns:
-    A server-side interceptor object.
+    A service-side interceptor object.
   """
   from grpc_opentracing import _server
   if traced_attributes is None:

@@ -1,4 +1,4 @@
-"""Implementation of the client-side open-tracing interceptor."""
+"""Implementation of the invocation-side open-tracing interceptor."""
 
 import sys
 import logging
