@@ -175,7 +175,7 @@ class OpenTracingTest(unittest.TestCase):
   def testStreamStreamOpenTracing(self):
     multi_callable = self._service.stream_stream_multi_callable
     requests = [b'\x01', b'\x02']
-    expected_response = self._service.handler.handle_stream_unary(
+    expected_response = self._service.handler.handle_stream_stream(
         iter(requests), None)
     response = multi_callable(iter(requests))
 
@@ -282,7 +282,7 @@ class OpenTracingInteroperabilityClientTest(unittest.TestCase):
   def testStreamStreamOpenTracing(self):
     multi_callable = self._service.stream_stream_multi_callable
     requests = [b'\x01', b'\x02']
-    expected_response = self._service.handler.handle_stream_unary(
+    expected_response = self._service.handler.handle_stream_stream(
         iter(requests), None)
     response = multi_callable(iter(requests))
 
@@ -409,7 +409,7 @@ class OpenTracingInteroperabilityServerTest(unittest.TestCase):
   def testStreamStreamOpenTracing(self):
     multi_callable = self._service.stream_stream_multi_callable
     requests = [b'\x01', b'\x02']
-    expected_response = self._service.handler.handle_stream_unary(
+    expected_response = self._service.handler.handle_stream_stream(
         iter(requests), None)
     response = multi_callable(iter(requests))
 

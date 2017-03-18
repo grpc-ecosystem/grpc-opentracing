@@ -3,7 +3,7 @@ from __future__ import print_function
 
 import sys
 import argparse
-from builtins import input
+from builtins import input, range
 
 import grpc
 import lightstep
@@ -97,7 +97,7 @@ class CommandExecuter(object):
 def execute_command(command_executer, command, arguments):
   via = 'functor'
   timeout = None
-  for argument_index in xrange(0, len(arguments), 2):
+  for argument_index in range(0, len(arguments), 2):
     argument = arguments[argument_index]
     if argument == '--via' and argument_index + 1 < len(arguments):
       if via not in ('functor', 'with_call', 'future'):

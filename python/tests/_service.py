@@ -1,5 +1,7 @@
 """Creates a simple service on top of gRPC for testing."""
 
+from builtins import input, range
+
 import grpc
 from grpc.framework.foundation import logging_pool
 from grpc_opentracing import grpcext
@@ -54,7 +56,7 @@ class Handler(object):
       self.invocation_metadata = servicer_context.invocation_metadata()
       if self.trailing_metadata is not None:
         servicer_context.set_trailing_metadata(self.trailing_metadata)
-    for _ in xrange(_STREAM_LENGTH):
+    for _ in range(_STREAM_LENGTH):
       yield request
 
   def handle_stream_unary(self, request_iterator, servicer_context):
