@@ -190,13 +190,14 @@ class OpenTracingClientInterceptor(grpcext.UnaryClientInterceptor,
   # For RPCs that stream responses, the result can be a generator. To record
   # the span across the generated responses and detect any errors, we wrap the
   # result in a new generator that yields the response values.
-  def _intercept_server_stream(self, metadata, client_info, invoker):
+  def _intercept_server_stream(self, request_or_iterator, metadata, client_info,
+                               invoker):
     with self._start_span(client_info.full_method, metadata,
                           client_info.is_client_stream, True,
                           client_info.timeout) as span:
       metadata = _inject_span_context(self._tracer, span, metadata)
       try:
-        result = invoker(metadata)
+        result = invoker(request_or_iterator, metadata)
         for response in result:
           yield response
       except:
@@ -205,15 +206,17 @@ class OpenTracingClientInterceptor(grpcext.UnaryClientInterceptor,
         span.log_kv({'event': 'error', 'error.object': e})
         raise
 
-  def intercept_stream(self, metadata, client_info, invoker):
+  def intercept_stream(self, request_or_iterator, metadata, client_info,
+                       invoker):
     if client_info.is_server_stream:
-      return self._intercept_server_stream(metadata, client_info, invoker)
+      return self._intercept_server_stream(request_or_iterator, metadata,
+                                           client_info, invoker)
     with self._start_span(client_info.full_method, metadata,
                           client_info.is_client_stream, False,
                           client_info.timeout) as span:
       metadata = _inject_span_context(self._tracer, span, metadata)
       try:
-        result = invoker(metadata)
+        result = invoker(request_or_iterator, metadata)
       except:
         e = sys.exc_info()[0]
         span.set_tag('error', True)

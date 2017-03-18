@@ -180,12 +180,13 @@ class OpenTracingServerInterceptor(grpcext.UnaryServerInterceptor,
   # For RPCs that stream responses, the result can be a generator. To record
   # the span across the generated responses and detect any errors, we wrap the
   # result in a new generator that yields the response values.
-  def _intercept_server_stream(self, servicer_context, server_info, handler):
+  def _intercept_server_stream(self, request_or_iterator, servicer_context,
+                               server_info, handler):
     with self._start_span(servicer_context, server_info.full_method,
                           server_info.is_client_stream, True) as span:
       servicer_context = _OpenTracingServicerContext(servicer_context, span)
       try:
-        result = handler(servicer_context)
+        result = handler(request_or_iterator, servicer_context)
         for response in result:
           yield response
       except:
@@ -195,10 +196,11 @@ class OpenTracingServerInterceptor(grpcext.UnaryServerInterceptor,
         raise
       _check_error_code(span, servicer_context)
 
-  def intercept_stream(self, servicer_context, server_info, handler):
+  def intercept_stream(self, request_or_iterator, servicer_context, server_info,
+                       handler):
     if server_info.is_server_stream:
-      return self._intercept_server_stream(servicer_context, server_info,
-                                           handler)
+      return self._intercept_server_stream(
+          request_or_iterator, servicer_context, server_info, handler)
     with self._start_span(servicer_context, server_info.full_method,
                           server_info.is_client_stream, False) as span:
       # The invocation-side may have invoked this RPC asynchronously; in which
@@ -209,7 +211,7 @@ class OpenTracingServerInterceptor(grpcext.UnaryServerInterceptor,
       servicer_context = _OpenTracingServicerContext(servicer_context, span,
                                                      trailing_metadata)
       try:
-        result = handler(servicer_context)
+        result = handler(request_or_iterator, servicer_context)
       except:
         e = sys.exc_info()[0]
         span.set_tag('error', True)

@@ -60,11 +60,15 @@ class StreamClientInterceptor(six.with_metaclass(abc.ABCMeta)):
   """
 
   @abc.abstractmethod
-  def intercept_stream(self, metadata, client_info, invoker):
+  def intercept_stream(self, request_or_iterator, metadata, client_info,
+                       invoker):
     """A function to be called when an invocation-side, unary-stream,
       stream-unary, or stream-stream RPC method is invoked.
 
     Args:
+      request_or_iterator: The request value for the RPC if
+        `client_info.is_client_stream` is `false`; otherwise, an iterator of
+        request values.
       metadata: Optional :term:`metadata` to be transmitted to the service-side
         of the RPC.
       client_info: A StreamClientInfo containing various information about
@@ -145,11 +149,15 @@ class StreamServerInterceptor(six.with_metaclass(abc.ABCMeta)):
   """
 
   @abc.abstractmethod
-  def intercept_stream(self, servicer_context, server_info, handler):
+  def intercept_stream(self, request_or_iterator, servicer_context, server_info,
+                       handler):
     """A function to be called when a service-side, unary-stream,
       stream-unary, or stream-stream RPC method is invoked.
 
     Args:
+      request_or_iterator: The request value for the RPC if
+        `server_info.is_client_stream` is `false`; otherwise, an iterator of
+        request values.
       servicer_context: A ServicerContext.
       server_info: A StreamServerInfo containing various information about
         the RPC.

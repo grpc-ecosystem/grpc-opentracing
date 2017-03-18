@@ -16,9 +16,10 @@ class ClientInterceptor(grpcext.UnaryClientInterceptor,
     self.intercepted = True
     return invoker(request, metadata)
 
-  def intercept_stream(self, metadata, client_info, invoker):
+  def intercept_stream(self, request_or_iterator, metadata, client_info,
+                       invoker):
     self.intercepted = True
-    return invoker(metadata)
+    return invoker(request_or_iterator, metadata)
 
 
 class ServerInterceptor(grpcext.UnaryServerInterceptor,
@@ -31,9 +32,10 @@ class ServerInterceptor(grpcext.UnaryServerInterceptor,
     self.intercepted = True
     return handler(request, servicer_context)
 
-  def intercept_stream(self, servicer_context, server_info, handler):
+  def intercept_stream(self, request_or_iterator, servicer_context, server_info,
+                       handler):
     self.intercepted = True
-    return handler(servicer_context)
+    return handler(request_or_iterator, servicer_context)
 
 
 class InterceptorTest(unittest.TestCase):
