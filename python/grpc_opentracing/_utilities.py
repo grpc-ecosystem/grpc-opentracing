@@ -16,3 +16,30 @@ def get_deadline_millis(timeout):
   if timeout is None:
     return 'None'
   return str(int(round(timeout * 1000)))
+
+
+class _RequestLoggingIterator(object):
+
+  def __init__(self, request_iterator, span):
+    self._request_iterator = request_iterator
+    self._span = span
+
+  def __iter__(self):
+    return self
+
+  def next(self):
+    request = next(self._request_iterator)
+    self._span.log_kv({'request': request})
+    return request
+
+  def __next__(self):
+    return self.next()
+
+
+def log_or_wrap_request_or_iterator(span, is_client_stream,
+                                    request_or_iterator):
+  if is_client_stream:
+    return _RequestLoggingIterator(request_or_iterator, span)
+  else:
+    span.log_kv({'request': request_or_iterator})
+    return request_or_iterator

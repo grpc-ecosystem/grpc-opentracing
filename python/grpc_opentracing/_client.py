@@ -8,7 +8,8 @@ from six import iteritems
 
 import grpc
 from grpc_opentracing import grpcext, ClientRequestAttribute
-from grpc_opentracing._utilities import get_method_type, get_deadline_millis
+from grpc_opentracing._utilities import get_method_type, get_deadline_millis,\
+    log_or_wrap_request_or_iterator
 import opentracing
 
 
@@ -124,6 +125,23 @@ def _inject_span_context(tracer, span, metadata):
   return metadata + tuple(iteritems(headers))
 
 
+def _wrap_result(tracer, span, method, log_payloads, result):
+  # If the RPC is called asynchronously, wrap the future so that an
+  # additional span can be created once it's realized.
+  if isinstance(result, grpc.Future):
+    return _OpenTracingRendezvous(result, method, tracer, log_payloads)
+  elif log_payloads:
+    response = result
+    # Handle the case when the RPC is initiated via the with_call
+    # method and the result is a tuple with the first element as the
+    # response.
+    # http://www.grpc.io/grpc/python/grpc.html#grpc.UnaryUnaryMultiCallable.with_call
+    if isinstance(result, tuple):
+      response = result[0]
+    span.log_kv({'response': response})
+  return result
+
+
 class OpenTracingClientInterceptor(grpcext.UnaryClientInterceptor,
                                    grpcext.StreamClientInterceptor):
 
@@ -171,21 +189,8 @@ class OpenTracingClientInterceptor(grpcext.UnaryClientInterceptor,
         span.set_tag('error', True)
         span.log_kv({'event': 'error', 'error.object': e})
         raise
-      # If the RPC is called asynchronously, wrap the future so that an
-      # additional span can be created once it's realized.
-      if isinstance(result, grpc.Future):
-        return _OpenTracingRendezvous(result, client_info.full_method,
-                                      self._tracer, self._log_payloads)
-      elif self._log_payloads:
-        response = result
-        # Handle the case when the RPC is initiated via the with_call
-        # method and the result is a tuple with the first element as the
-        # response.
-        # http://www.grpc.io/grpc/python/grpc.html#grpc.UnaryUnaryMultiCallable.with_call
-        if isinstance(result, tuple):
-          response = result[0]
-        span.log_kv({'response': response})
-      return result
+      return _wrap_result(self._tracer, span, client_info.full_method,
+                          self._log_payloads, result)
 
   # For RPCs that stream responses, the result can be a generator. To record
   # the span across the generated responses and detect any errors, we wrap the
@@ -196,9 +201,14 @@ class OpenTracingClientInterceptor(grpcext.UnaryClientInterceptor,
                           client_info.is_client_stream, True,
                           client_info.timeout) as span:
       metadata = _inject_span_context(self._tracer, span, metadata)
+      if self._log_payloads:
+        request_or_iterator = log_or_wrap_request_or_iterator(
+            span, client_info.is_client_stream, request_or_iterator)
       try:
         result = invoker(request_or_iterator, metadata)
         for response in result:
+          if self._log_payloads:
+            span.log_kv({'response': response})
           yield response
       except:
         e = sys.exc_info()[0]
@@ -222,10 +232,5 @@ class OpenTracingClientInterceptor(grpcext.UnaryClientInterceptor,
         span.set_tag('error', True)
         span.log_kv({'event': 'error', 'error.object': e})
         raise
-      # If the RPC is called asynchronously, wrap the future so that an
-      # additional span can be created once it's realized.
-      if isinstance(result, grpc.Future):
-        return _OpenTracingRendezvous(result, client_info.full_method,
-                                      self._tracer, False)
-      else:
-        return result
+      return _wrap_result(self._tracer, span, client_info.full_method, False,
+                          result)
