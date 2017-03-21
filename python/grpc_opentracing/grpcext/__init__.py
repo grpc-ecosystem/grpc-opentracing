@@ -15,15 +15,26 @@ class UnaryClientInfo(six.with_metaclass(abc.ABCMeta)):
   """
 
 
-class UnaryClientInterceptor(six.with_metaclass(abc.ABCMeta)):
-  """Invokes custom code when an invocation-side, unary-unary RPC method is
-    called.
+class StreamClientInfo(six.with_metaclass(abc.ABCMeta)):
+  """Consists of various information about a stream RPC on the invocation-side.
+
+  Attributes:
+    full_method: A string of the full RPC method, i.e., /package.service/method.
+    is_client_stream: Indicates whether the RPC is client-streaming.
+    is_server_stream: Indicates whether the RPC is server-streaming.
+    timeout: The length of time in seconds to wait for the computation to
+      terminate or be cancelled, or None if this method should block until
+      the computation is terminated or is cancelled no matter how long that
+      takes.
   """
+
+
+class UnaryClientInterceptor(six.with_metaclass(abc.ABCMeta)):
+  """Affords intercepting unary-unary RPCs on the invocation-side."""
 
   @abc.abstractmethod
   def intercept_unary(self, request, metadata, client_info, invoker):
-    """A function to be called when an invocation-side, unary-unary RPC method 
-      is invoked.
+    """Intercepts unary-unary RPCs on the invocation-side.
 
     Args:
       request: The request value for the RPC.
@@ -40,30 +51,13 @@ class UnaryClientInterceptor(six.with_metaclass(abc.ABCMeta)):
     raise NotImplementedError()
 
 
-class StreamClientInfo(six.with_metaclass(abc.ABCMeta)):
-  """Consists of various information about a stream RPC on the invocation-side.
-
-  Attributes:
-    full_method: A string of the full RPC method, i.e., /package.service/method.
-    is_client_stream: Indicates whether the RPC is client-streaming.
-    is_server_stream: Indicates whether the RPC is server-streaming.
-    timeout: The length of time in seconds to wait for the computation to
-      terminate or be cancelled, or None if this method should block until
-      the computation is terminated or is cancelled no matter how long that
-      takes.
-  """
-
-
 class StreamClientInterceptor(six.with_metaclass(abc.ABCMeta)):
-  """Invokes custom code when an invocation-side, unary-stream, stream-unary, or
-    stream-stream RPC method is called.
-  """
+  """Affords intercepting stream RPCs on the invocation-side."""
 
   @abc.abstractmethod
   def intercept_stream(self, request_or_iterator, metadata, client_info,
                        invoker):
-    """A function to be called when an invocation-side, unary-stream,
-      stream-unary, or stream-stream RPC method is invoked.
+    """Intercepts stream RPCs on the invocation-side.
 
     Args:
       request_or_iterator: The request value for the RPC if
@@ -83,8 +77,7 @@ class StreamClientInterceptor(six.with_metaclass(abc.ABCMeta)):
 
 
 def intercept_channel(channel, *interceptors):
-  """Creates a new Channel that invokes the given interceptors if their
-    targeted RPC types are called.
+  """Creates an intercepted channel.
 
   Args:
     channel: A Channel.
@@ -121,13 +114,11 @@ class StreamServerInfo(six.with_metaclass(abc.ABCMeta)):
 
 
 class UnaryServerInterceptor(six.with_metaclass(abc.ABCMeta)):
-  """Invokes custom code when a service-side, unary-unary RPC method is called.
-  """
+  """Affords intercepting unary-unary RPCs on the service-side."""
 
   @abc.abstractmethod
   def intercept_unary(self, request, servicer_context, server_info, handler):
-    """A function to be called when a service-side, unary-unary RPC method is
-      invoked.
+    """Intercepts unary-unary RPCs on the service-side.
 
     Args:
       request: The request value for the RPC.
@@ -144,19 +135,16 @@ class UnaryServerInterceptor(six.with_metaclass(abc.ABCMeta)):
 
 
 class StreamServerInterceptor(six.with_metaclass(abc.ABCMeta)):
-  """Invokes custom code when a service-side, unary-stream, stream-unary, or
-    stream-stream, RPC method is called.
-  """
+  """Affords intercepting stream RPCs on the service-side."""
 
   @abc.abstractmethod
   def intercept_stream(self, request_or_iterator, servicer_context, server_info,
                        handler):
-    """A function to be called when a service-side, unary-stream,
-      stream-unary, or stream-stream RPC method is invoked.
+    """Intercepts stream RPCs on the service-side.
 
     Args:
       request_or_iterator: The request value for the RPC if
-        `server_info.is_client_stream` is `false`; otherwise, an iterator of
+        `server_info.is_client_stream` is `False`; otherwise, an iterator of
         request values.
       servicer_context: A ServicerContext.
       server_info: A StreamServerInfo containing various information about
@@ -171,8 +159,7 @@ class StreamServerInterceptor(six.with_metaclass(abc.ABCMeta)):
 
 
 def intercept_server(server, *interceptors):
-  """Creates a new Channel that invokes the given interceptors if their
-    targeted RPC types are called.
+  """Creates an intercepted server.
 
   Args:
     server: A Server.
