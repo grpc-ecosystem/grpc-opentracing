@@ -4,7 +4,7 @@ import six
 
 
 class UnaryClientInfo(six.with_metaclass(abc.ABCMeta)):
-  """Consists of various information about a unary RPC on the invocation-side.
+    """Consists of various information about a unary RPC on the invocation-side.
 
   Attributes:
     full_method: A string of the full RPC method, i.e., /package.service/method.
@@ -16,7 +16,7 @@ class UnaryClientInfo(six.with_metaclass(abc.ABCMeta)):
 
 
 class StreamClientInfo(six.with_metaclass(abc.ABCMeta)):
-  """Consists of various information about a stream RPC on the invocation-side.
+    """Consists of various information about a stream RPC on the invocation-side.
 
   Attributes:
     full_method: A string of the full RPC method, i.e., /package.service/method.
@@ -30,11 +30,11 @@ class StreamClientInfo(six.with_metaclass(abc.ABCMeta)):
 
 
 class UnaryClientInterceptor(six.with_metaclass(abc.ABCMeta)):
-  """Affords intercepting unary-unary RPCs on the invocation-side."""
+    """Affords intercepting unary-unary RPCs on the invocation-side."""
 
-  @abc.abstractmethod
-  def intercept_unary(self, request, metadata, client_info, invoker):
-    """Intercepts unary-unary RPCs on the invocation-side.
+    @abc.abstractmethod
+    def intercept_unary(self, request, metadata, client_info, invoker):
+        """Intercepts unary-unary RPCs on the invocation-side.
 
     Args:
       request: The request value for the RPC.
@@ -48,16 +48,16 @@ class UnaryClientInterceptor(six.with_metaclass(abc.ABCMeta)):
     Returns:
       The result from calling invoker(request, metadata).
     """
-    raise NotImplementedError()
+        raise NotImplementedError()
 
 
 class StreamClientInterceptor(six.with_metaclass(abc.ABCMeta)):
-  """Affords intercepting stream RPCs on the invocation-side."""
+    """Affords intercepting stream RPCs on the invocation-side."""
 
-  @abc.abstractmethod
-  def intercept_stream(self, request_or_iterator, metadata, client_info,
-                       invoker):
-    """Intercepts stream RPCs on the invocation-side.
+    @abc.abstractmethod
+    def intercept_stream(self, request_or_iterator, metadata, client_info,
+                         invoker):
+        """Intercepts stream RPCs on the invocation-side.
 
     Args:
       request_or_iterator: The request value for the RPC if
@@ -73,11 +73,11 @@ class StreamClientInterceptor(six.with_metaclass(abc.ABCMeta)):
       Returns:
         The result from calling invoker(metadata).
     """
-    raise NotImplementedError()
+        raise NotImplementedError()
 
 
 def intercept_channel(channel, *interceptors):
-  """Creates an intercepted channel.
+    """Creates an intercepted channel.
 
   Args:
     channel: A Channel.
@@ -91,12 +91,12 @@ def intercept_channel(channel, *interceptors):
     TypeError: If an interceptor derives from neither UnaryClientInterceptor
       nor StreamClientInterceptor.
   """
-  from grpc_opentracing.grpcext import _interceptor
-  return _interceptor.intercept_channel(channel, *interceptors)
+    from grpc_opentracing.grpcext import _interceptor
+    return _interceptor.intercept_channel(channel, *interceptors)
 
 
 class UnaryServerInfo(six.with_metaclass(abc.ABCMeta)):
-  """Consists of various information about a unary RPC on the service-side.
+    """Consists of various information about a unary RPC on the service-side.
 
   Attributes:
     full_method: A string of the full RPC method, i.e., /package.service/method.
@@ -104,7 +104,7 @@ class UnaryServerInfo(six.with_metaclass(abc.ABCMeta)):
 
 
 class StreamServerInfo(six.with_metaclass(abc.ABCMeta)):
-  """Consists of various information about a stream RPC on the service-side.
+    """Consists of various information about a stream RPC on the service-side.
 
   Attributes:
     full_method: A string of the full RPC method, i.e., /package.service/method.
@@ -114,11 +114,11 @@ class StreamServerInfo(six.with_metaclass(abc.ABCMeta)):
 
 
 class UnaryServerInterceptor(six.with_metaclass(abc.ABCMeta)):
-  """Affords intercepting unary-unary RPCs on the service-side."""
+    """Affords intercepting unary-unary RPCs on the service-side."""
 
-  @abc.abstractmethod
-  def intercept_unary(self, request, servicer_context, server_info, handler):
-    """Intercepts unary-unary RPCs on the service-side.
+    @abc.abstractmethod
+    def intercept_unary(self, request, servicer_context, server_info, handler):
+        """Intercepts unary-unary RPCs on the service-side.
 
     Args:
       request: The request value for the RPC.
@@ -131,16 +131,16 @@ class UnaryServerInterceptor(six.with_metaclass(abc.ABCMeta)):
     Returns:
       The result from calling handler(request, servicer_context).
     """
-    raise NotImplementedError()
+        raise NotImplementedError()
 
 
 class StreamServerInterceptor(six.with_metaclass(abc.ABCMeta)):
-  """Affords intercepting stream RPCs on the service-side."""
+    """Affords intercepting stream RPCs on the service-side."""
 
-  @abc.abstractmethod
-  def intercept_stream(self, request_or_iterator, servicer_context, server_info,
-                       handler):
-    """Intercepts stream RPCs on the service-side.
+    @abc.abstractmethod
+    def intercept_stream(self, request_or_iterator, servicer_context,
+                         server_info, handler):
+        """Intercepts stream RPCs on the service-side.
 
     Args:
       request_or_iterator: The request value for the RPC if
@@ -155,11 +155,11 @@ class StreamServerInterceptor(six.with_metaclass(abc.ABCMeta)):
       Returns:
         The result from calling handler(servicer_context).
     """
-    raise NotImplementedError()
+        raise NotImplementedError()
 
 
 def intercept_server(server, *interceptors):
-  """Creates an intercepted server.
+    """Creates an intercepted server.
 
   Args:
     server: A Server.
@@ -173,8 +173,8 @@ def intercept_server(server, *interceptors):
     TypeError: If an interceptor derives from neither UnaryServerInterceptor
       nor StreamServerInterceptor.
   """
-  from grpc_opentracing.grpcext import _interceptor
-  return _interceptor.intercept_server(server, *interceptors)
+    from grpc_opentracing.grpcext import _interceptor
+    return _interceptor.intercept_server(server, *interceptors)
 
 
 ###################################  __all__  #################################

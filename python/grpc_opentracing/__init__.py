@@ -7,11 +7,11 @@ import grpc
 
 
 class ActiveSpanSource(six.with_metaclass(abc.ABCMeta)):
-  """Provides a way to access an the active span."""
+    """Provides a way to access an the active span."""
 
-  @abc.abstractmethod
-  def get_active_span(self):
-    """Identifies the active span.
+    @abc.abstractmethod
+    def get_active_span(self):
+        """Identifies the active span.
 
     Returns:
       An object that implements the opentracing.Span interface.
@@ -20,7 +20,7 @@ class ActiveSpanSource(six.with_metaclass(abc.ABCMeta)):
 
 @enum.unique
 class ClientRequestAttribute(enum.Enum):
-  """Optional tracing tags available on the invocation-side.
+    """Optional tracing tags available on the invocation-side.
 
   Attributes:
     HEADERS: The initial :term:`metadata`.
@@ -29,15 +29,15 @@ class ClientRequestAttribute(enum.Enum):
     DEADLINE: The length of time in seconds to wait for the computation to
       terminate or be cancelled.
   """
-  HEADERS = 0
-  METHOD_TYPE = 1
-  METHOD_NAME = 2
-  DEADLINE = 3
+    HEADERS = 0
+    METHOD_TYPE = 1
+    METHOD_NAME = 2
+    DEADLINE = 3
 
 
 @enum.unique
 class ServerRequestAttribute(enum.Enum):
-  """Optional tracing tags available on the service-side.
+    """Optional tracing tags available on the service-side.
 
   Attributes:
     HEADERS: The initial :term:`metadata`.
@@ -46,17 +46,17 @@ class ServerRequestAttribute(enum.Enum):
     DEADLINE: The length of time in seconds to wait for the computation to
       terminate or be cancelled.
   """
-  HEADERS = 0
-  METHOD_TYPE = 1
-  METHOD_NAME = 2
-  DEADLINE = 3
+    HEADERS = 0
+    METHOD_TYPE = 1
+    METHOD_NAME = 2
+    DEADLINE = 3
 
 
 def open_tracing_client_interceptor(tracer,
                                     active_span_source=None,
                                     log_payloads=False,
                                     traced_attributes=None):
-  """Creates an invocation-side interceptor that can be use with gRPC to add
+    """Creates an invocation-side interceptor that can be use with gRPC to add
     OpenTracing information.
 
   Args:
@@ -68,19 +68,19 @@ def open_tracing_client_interceptor(tracer,
   Returns:
     An invocation-side interceptor object.
   """
-  from grpc_opentracing import _client
-  if traced_attributes is None:
-    traced_attributes = set()
-  else:
-    traced_attributes = set(traced_attributes)
-  return _client.OpenTracingClientInterceptor(tracer, active_span_source,
-                                              log_payloads, traced_attributes)
+    from grpc_opentracing import _client
+    if traced_attributes is None:
+        traced_attributes = set()
+    else:
+        traced_attributes = set(traced_attributes)
+    return _client.OpenTracingClientInterceptor(tracer, active_span_source,
+                                                log_payloads, traced_attributes)
 
 
 def open_tracing_server_interceptor(tracer,
                                     log_payloads=False,
                                     traced_attributes=None):
-  """Creates a service-side interceptor that can be use with gRPC to add
+    """Creates a service-side interceptor that can be use with gRPC to add
     OpenTracing information.
 
   Args:
@@ -90,13 +90,13 @@ def open_tracing_server_interceptor(tracer,
   Returns:
     A service-side interceptor object.
   """
-  from grpc_opentracing import _server
-  if traced_attributes is None:
-    traced_attributes = set()
-  else:
-    traced_attributes = set(traced_attributes)
-  return _server.OpenTracingServerInterceptor(tracer, log_payloads,
-                                              traced_attributes)
+    from grpc_opentracing import _server
+    if traced_attributes is None:
+        traced_attributes = set()
+    else:
+        traced_attributes = set(traced_attributes)
+    return _server.OpenTracingServerInterceptor(tracer, log_payloads,
+                                                traced_attributes)
 
 
 ###################################  __all__  #################################
