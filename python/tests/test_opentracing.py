@@ -59,14 +59,6 @@ class OpenTracingTest(unittest.TestCase):
             self._tracer.get_relationship(0, 1),
             opentracing.ReferenceType.CHILD_OF)
 
-        span2 = self._tracer.get_span(2)
-        self.assertIsNotNone(span2)
-        self.assertTrue(span2.get_tag('span.kind'), 'client')
-
-        self.assertEqual(
-            self._tracer.get_relationship(1, 2),
-            opentracing.ReferenceType.FOLLOWS_FROM)
-
     def testUnaryUnaryOpenTracingWithCall(self):
         multi_callable = self._service.unary_unary_multi_callable
         request = b'\x01'
@@ -174,14 +166,6 @@ class OpenTracingTest(unittest.TestCase):
         self.assertEqual(
             self._tracer.get_relationship(0, 1),
             opentracing.ReferenceType.CHILD_OF)
-
-        span2 = self._tracer.get_span(2)
-        self.assertIsNotNone(span2)
-        self.assertTrue(span2.get_tag('span.kind'), 'client')
-
-        self.assertEqual(
-            self._tracer.get_relationship(1, 2),
-            opentracing.ReferenceType.FOLLOWS_FROM)
 
     def testStreamStreamOpenTracing(self):
         multi_callable = self._service.stream_stream_multi_callable
