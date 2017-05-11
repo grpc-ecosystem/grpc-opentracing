@@ -64,7 +64,7 @@ func OpenTracingServerInterceptor(tracer opentracing.Tracer, optFuncs ...Option)
 				serverSpan.LogFields(log.Object("gRPC response", resp))
 			}
 		} else {
-			ext.Error.Set(serverSpan, true)
+			SetSpanTags(serverSpan, err, false)
 			serverSpan.LogFields(log.String("event", "error"), log.String("message", err.Error()))
 		}
 		if otgrpcOpts.decorator != nil {
