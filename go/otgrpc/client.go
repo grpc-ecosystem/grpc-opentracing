@@ -73,7 +73,7 @@ func OpenTracingClientInterceptor(tracer opentracing.Tracer, optFuncs ...Option)
 			}
 		} else {
 			SetSpanTags(clientSpan, err, true)
-      clientSpan.LogFields(log.String("event", "error"), log.String("message", err.Error()))
+			clientSpan.LogFields(log.String("event", "error"), log.String("message", err.Error()))
 		}
 		if otgrpcOpts.decorator != nil {
 			otgrpcOpts.decorator(clientSpan, method, req, resp, err)
