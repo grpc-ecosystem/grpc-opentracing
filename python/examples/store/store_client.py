@@ -1,12 +1,12 @@
 # A OpenTraced client for a Python service that implements the store interface.
 from __future__ import print_function
 
-import sys
+import time
 import argparse
 from builtins import input, range
 
 import grpc
-import lightstep
+from jaeger_client import Config
 
 from grpc_opentracing import open_tracing_client_interceptor, ClientRequestAttribute
 from grpc_opentracing.grpcext import intercept_channel
@@ -162,7 +162,6 @@ def read_and_execute(command_executer):
 
 def run():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--access_token', help='LightStep Access Token')
     parser.add_argument(
         '--log_payloads',
         action='store_true',
@@ -172,12 +171,17 @@ def run():
         action='store_true',
         help='set gRPC-specific tags on spans')
     args = parser.parse_args()
-    if not args.access_token:
-        print('You must specify access_token')
-        sys.exit(-1)
 
-    tracer = lightstep.Tracer(
-        component_name='store-client', access_token=args.access_token)
+    config = Config(
+        config={
+            'sampler': {
+                'type': 'const',
+                'param': 1,
+            },
+            'logging': True,
+        },
+        service_name='store-client')
+    tracer = config.initialize_tracer()
     traced_attributes = []
     if args.include_grpc_tags:
         traced_attributes = [
@@ -194,7 +198,9 @@ def run():
 
     read_and_execute(CommandExecuter(stub))
 
-    tracer.flush()
+    time.sleep(2)
+    tracer.close()
+    time.sleep(2)
 
 
 if __name__ == '__main__':
