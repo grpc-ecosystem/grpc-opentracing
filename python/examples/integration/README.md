@@ -3,6 +3,6 @@ spans.
 
 ## Usage
 ```
-python integration_server.py --access_token `lightstep-access-token` &
-python integration_client.py --access_token `lightstep-access-token`
+python integration_server.py &
+python integration_client.py
 ```
