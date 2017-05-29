@@ -17,6 +17,9 @@ complete example.
 ### Client-side usage example
 
 ```python
+from grpc_opentracing import open_tracing_client_interceptor
+from grpc_opentracing.grpcext import intercept_channel
+
 tracer = # some OpenTracing Tracer instance
 interceptor = open_tracing_client_interceptor(tracer)
 channel = # the grpc.Channel you created to invoke RPCs
@@ -28,6 +31,9 @@ channel = intercept_channel(channel, interceptor)
 ### Server-side usage example
 
 ```python
+from grpc_opentracing import open_tracing_server_interceptor
+from grpc_opentracing.grpcext import intercept_server
+
 tracer = # some OpenTracing Tracer instance
 interceptor = open_tracing_server_interceptor(tracer)
 server = # the grpc.Server you created to receive RPCs
