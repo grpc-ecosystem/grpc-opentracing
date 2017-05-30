@@ -64,6 +64,8 @@ def open_tracing_client_interceptor(tracer,
     active_span_source: An optional ActiveSpanSource to customize how the
       active span is determined.
     log_payloads: Indicates whether requests should be logged.
+    traced_attributes: An optional list of ClientRequestAttributes specifying
+      additional tags to set on client spans.
 
   Returns:
     An invocation-side interceptor object.
@@ -86,6 +88,8 @@ def open_tracing_server_interceptor(tracer,
   Args:
     tracer: An object implmenting the opentracing.Tracer interface.
     log_payloads: Indicates whether requests should be logged.
+    traced_attributes: An optional list of ServerRequestAttributes specifying
+      additional tags to set on server spans.
 
   Returns:
     A service-side interceptor object.
