@@ -9,6 +9,7 @@ from grpc_opentracing import grpcext, ActiveSpanSource, ServerRequestAttribute
 from grpc_opentracing._utilities import get_method_type, get_deadline_millis,\
     log_or_wrap_request_or_iterator
 import opentracing
+from opentracing.ext import tags as ot_tags
 
 
 class _OpenTracingServicerContext(grpc.ServicerContext, ActiveSpanSource):
@@ -59,14 +60,14 @@ def _add_peer_tags(peer_str, tags):
     ipv4_re = r"ipv4:(?P<address>.+):(?P<port>\d+)"
     match = re.match(ipv4_re, peer_str)
     if match:
-        tags['peer.ipv4'] = match.group('address')
-        tags['peer.port'] = match.group('port')
+        tags[ot_tags.PEER_HOST_IPV4] = match.group('address')
+        tags[ot_tags.PEER_PORT] = match.group('port')
         return
     ipv6_re = r"ipv6:\[(?P<address>.+)\]:(?P<port>\d+)"
     match = re.match(ipv6_re, peer_str)
     if match:
-        tags['peer.ipv6'] = match.group('address')
-        tags['peer.port'] = match.group('port')
+        tags[ot_tags.PEER_HOST_IPV6] = match.group('address')
+        tags[ot_tags.PEER_PORT] = match.group('port')
         return
     logging.warning('Unrecognized peer: \"%s\"', peer_str)
 
@@ -105,7 +106,10 @@ class OpenTracingServerInterceptor(grpcext.UnaryServerInterceptor,
                 opentracing.SpanContextCorruptedException) as e:
             logging.exception('tracer.extract() failed')
             error = e
-        tags = {'component': 'grpc', 'span.kind': 'server'}
+        tags = {
+            ot_tags.COMPONENT: 'grpc',
+            ot_tags.SPAN_KIND: ot_tags.SPAN_KIND_RPC_SERVER
+        }
         _add_peer_tags(servicer_context.peer(), tags)
         for traced_attribute in self._traced_attributes:
             if traced_attribute == ServerRequestAttribute.HEADERS:

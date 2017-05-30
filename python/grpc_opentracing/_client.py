@@ -11,6 +11,7 @@ from grpc_opentracing import grpcext, ClientRequestAttribute
 from grpc_opentracing._utilities import get_method_type, get_deadline_millis,\
     log_or_wrap_request_or_iterator
 import opentracing
+from opentracing.ext import tags as ot_tags
 
 
 class _GuardedSpan(object):
@@ -103,7 +104,10 @@ class OpenTracingClientInterceptor(grpcext.UnaryClientInterceptor,
             active_span = self._active_span_source.get_active_span()
             if active_span is not None:
                 active_span_context = active_span.context
-        tags = {'component': 'grpc', 'span.kind': 'client'}
+        tags = {
+            ot_tags.COMPONENT: 'grpc',
+            ot_tags.SPAN_KIND: ot_tags.SPAN_KIND_RPC_CLIENT
+        }
         for traced_attribute in self._traced_attributes:
             if traced_attribute == ClientRequestAttribute.HEADERS:
                 tags['grpc.headers'] = str(metadata)
