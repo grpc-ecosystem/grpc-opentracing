@@ -1,5 +1,25 @@
 """Internal utilities for gRPC OpenTracing."""
 
+import collections
+import grpc_opentracing
+
+
+class RpcInfo(grpc_opentracing.RpcInfo):
+
+    def __init__(self,
+                 full_method=None,
+                 metadata=None,
+                 timeout=None,
+                 request=None,
+                 response=None,
+                 error=None):
+        self.full_method = full_method
+        self.metadata = metadata
+        self.timeout = timeout
+        self.request = request
+        self.response = response
+        self.error = error
+
 
 def get_method_type(is_client_stream, is_server_stream):
     if is_client_stream and is_server_stream:

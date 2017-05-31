@@ -8,7 +8,8 @@ from builtins import input, range
 import grpc
 from jaeger_client import Config
 
-from grpc_opentracing import open_tracing_client_interceptor, ClientRequestAttribute
+from grpc_opentracing import open_tracing_client_interceptor, \
+                             SpanDecorator
 from grpc_opentracing.grpcext import intercept_channel
 
 import store_pb2
@@ -160,6 +161,14 @@ def read_and_execute(command_executer):
             break
 
 
+class StoreSpanDecorator(SpanDecorator):
+
+    def __call__(self, span, rpc_info):
+        span.set_tag('grpc.method', rpc_info.full_method)
+        span.set_tag('grpc.headers', str(rpc_info.metadata))
+        span.set_tag('grpc.deadline', str(rpc_info.timeout))
+
+
 def run():
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -182,16 +191,11 @@ def run():
         },
         service_name='store-client')
     tracer = config.initialize_tracer()
-    traced_attributes = []
+    span_decorator = None
     if args.include_grpc_tags:
-        traced_attributes = [
-            ClientRequestAttribute.HEADERS, ClientRequestAttribute.METHOD_TYPE,
-            ClientRequestAttribute.METHOD_NAME, ClientRequestAttribute.DEADLINE
-        ]
+        span_decorator = StoreSpanDecorator()
     tracer_interceptor = open_tracing_client_interceptor(
-        tracer,
-        log_payloads=args.log_payloads,
-        traced_attributes=traced_attributes)
+        tracer, log_payloads=args.log_payloads, span_decorator=span_decorator)
     channel = grpc.insecure_channel('localhost:50051')
     channel = intercept_channel(channel, tracer_interceptor)
     stub = store_pb2.StoreStub(channel)
