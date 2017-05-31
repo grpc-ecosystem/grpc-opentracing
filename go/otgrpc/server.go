@@ -60,7 +60,7 @@ func OpenTracingServerInterceptor(tracer opentracing.Tracer, optFuncs ...Option)
 				serverSpan.LogFields(log.Object("gRPC response", resp))
 			}
 		} else {
-			ext.Error.Set(serverSpan, true)
+			SetSpanTags(serverSpan, err, false)
 			serverSpan.LogFields(log.String("event", "error"), log.String("message", err.Error()))
 		}
 		if otgrpcOpts.decorator != nil {
@@ -112,7 +112,7 @@ func OpenTracingStreamServerInterceptor(tracer opentracing.Tracer, optFuncs ...O
 		}
 		err = handler(srv, ss)
 		if err != nil {
-			ext.Error.Set(serverSpan, true)
+			SetSpanTags(serverSpan, err, false)
 			serverSpan.LogFields(log.String("event", "error"), log.String("message", err.Error()))
 		}
 		if otgrpcOpts.decorator != nil {
@@ -132,7 +132,7 @@ func (ss *openTracingServerStream) Context() context.Context {
 }
 
 func extractSpanContext(ctx context.Context, tracer opentracing.Tracer) (opentracing.SpanContext, error) {
-	md, ok := metadata.FromContext(ctx)
+	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		md = metadata.New(nil)
 	}

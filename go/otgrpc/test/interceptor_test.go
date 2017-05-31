@@ -266,5 +266,5 @@ func TestStreamingContextCancellationOpenTracing(t *testing.T) {
 	parent := spans[0]
 	child := spans[1]
 	assert.Equal(t, child.ParentID, parent.Context().(mocktracer.MockSpanContext).SpanID)
-	assert.True(t, child.Tag("error").(bool))
+	assert.True(t, parent.Tag("error").(bool))
 }
