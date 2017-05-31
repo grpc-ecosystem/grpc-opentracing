@@ -11,7 +11,8 @@ import grpc
 from concurrent import futures
 from jaeger_client import Config
 
-from grpc_opentracing import open_tracing_server_interceptor, ServerRequestAttribute
+from grpc_opentracing import open_tracing_server_interceptor, \
+                             SpanDecorator
 from grpc_opentracing.grpcext import intercept_server
 
 import store_pb2
@@ -65,6 +66,14 @@ class Store(store_pb2.StoreServicer):
             yield store_pb2.QuantityResponse(name=request.name, count=count)
 
 
+class StoreSpanDecorator(SpanDecorator):
+
+    def __call__(self, span, rpc_info):
+        span.set_tag('grpc.method', rpc_info.full_method)
+        span.set_tag('grpc.headers', str(rpc_info.metadata))
+        span.set_tag('grpc.deadline', str(rpc_info.timeout))
+
+
 def serve():
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -87,16 +96,11 @@ def serve():
         },
         service_name='store-server')
     tracer = config.initialize_tracer()
-    traced_attributes = []
+    span_decorator = None
     if args.include_grpc_tags:
-        traced_attributes = [
-            ServerRequestAttribute.HEADERS, ServerRequestAttribute.METHOD_TYPE,
-            ServerRequestAttribute.METHOD_NAME, ServerRequestAttribute.DEADLINE
-        ]
+        span_decorator = StoreSpanDecorator()
     tracer_interceptor = open_tracing_server_interceptor(
-        tracer,
-        log_payloads=args.log_payloads,
-        traced_attributes=traced_attributes)
+        tracer, log_payloads=args.log_payloads, span_decorator=span_decorator)
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     server = intercept_server(server, tracer_interceptor)
 

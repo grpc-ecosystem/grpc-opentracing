@@ -131,9 +131,7 @@ class OpenTracingClientInterceptor(grpcext.UnaryClientInterceptor,
                 full_method=client_info.full_method,
                 metadata=metadata,
                 timeout=client_info.timeout,
-                request=request,
-                response=None,
-                error=None)
+                request=request)
             if self._log_payloads:
                 guarded_span.span.log_kv({'request': request})
             try:

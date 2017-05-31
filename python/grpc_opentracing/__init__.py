@@ -48,22 +48,6 @@ class SpanDecorator(six.with_metaclass(abc.ABCMeta)):
         raise NotImplementedError()
 
 
-@enum.unique
-class ServerRequestAttribute(enum.Enum):
-    """Optional tracing tags available on the service-side.  
-  Attributes:
-    HEADERS: The initial :term:`metadata`.
-    METHOD_TYPE: Type of the method invoked.
-    METHOD_NAME: Name of the method invoked.
-    DEADLINE: The length of time in seconds to wait for the computation to
-      terminate or be cancelled.
-  """
-    HEADERS = 0
-    METHOD_TYPE = 1
-    METHOD_NAME = 2
-    DEADLINE = 3
-
-
 def open_tracing_client_interceptor(tracer,
                                     active_span_source=None,
                                     log_payloads=False,
@@ -76,7 +60,7 @@ def open_tracing_client_interceptor(tracer,
     active_span_source: An optional ActiveSpanSource to customize how the
       active span is determined.
     log_payloads: Indicates whether requests should be logged.
-    span_decorator: An optional SpanDecorator
+    span_decorator: An optional SpanDecorator.
 
   Returns:
     An invocation-side interceptor object.
@@ -88,30 +72,25 @@ def open_tracing_client_interceptor(tracer,
 
 def open_tracing_server_interceptor(tracer,
                                     log_payloads=False,
-                                    traced_attributes=None):
+                                    span_decorator=None):
     """Creates a service-side interceptor that can be use with gRPC to add
     OpenTracing information.
 
   Args:
     tracer: An object implmenting the opentracing.Tracer interface.
     log_payloads: Indicates whether requests should be logged.
-    traced_attributes: An optional list of ServerRequestAttributes specifying
-      additional tags to set on server spans.
+    span_decorator: An optional SpanDecorator.
 
   Returns:
     A service-side interceptor object.
   """
     from grpc_opentracing import _server
-    if traced_attributes is None:
-        traced_attributes = set()
-    else:
-        traced_attributes = set(traced_attributes)
     return _server.OpenTracingServerInterceptor(tracer, log_payloads,
-                                                traced_attributes)
+                                                span_decorator)
 
 
 ###################################  __all__  #################################
 
-__all__ = ('ActiveSpanSource', 'ServerRequestAttribute',
+__all__ = ('ActiveSpanSource', 'RpcInfo', 'SpanDecorator',
            'open_tracing_client_interceptor',
            'open_tracing_server_interceptor',)
