@@ -74,7 +74,8 @@ func OpenTracingClientInterceptor(tracer opentracing.Tracer, optFuncs ...Option)
 }
 
 // OpenTracingStreamClientInterceptor returns a grpc.StreamClientInterceptor suitable
-// for use in a grpc.Dial call.
+// for use in a grpc.Dial call. The interceptor instruments streaming RPCs by creating
+// a single span to correspond to the lifetime of the RPC's stream.
 //
 // For example:
 //
