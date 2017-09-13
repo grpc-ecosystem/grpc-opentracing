@@ -2,6 +2,7 @@ description = "grpc-java: OpenTracing"
 
 group = "io.opentracing.contrib"
 version = '0.2.0'
+version = '0.3.0'
 
 apply plugin: 'java'
 apply plugin: 'maven'
@@ -48,15 +49,16 @@ repositories {
 jar {
     baseName 'grpc-opentracing'
     version = '0.2.0'
+    version = '0.3.0'
 }
 
 dependencies {
-    compile 'io.grpc:grpc-core:1.1.2'
-    compile 'io.opentracing:opentracing-api:0.15.0'
-    testCompile 'io.opentracing:opentracing-mock:0.15.0'
-    testCompile 'io.grpc:grpc-protobuf:1.1.2'
-    testCompile 'io.grpc:grpc-netty:1.1.2'
-    testCompile 'io.grpc:grpc-stub:1.1.2'
+    compile 'io.grpc:grpc-core:1.6.1'
+    compile 'io.opentracing:opentracing-api:0.30.0'
+    testCompile 'io.opentracing:opentracing-mock:0.30.0'
+    testCompile 'io.grpc:grpc-protobuf:1.6.1'
+    testCompile 'io.grpc:grpc-netty:1.6.1'
+    testCompile 'io.grpc:grpc-stub:1.6.1'
     testCompile 'junit:junit:4.12'
 }
 
