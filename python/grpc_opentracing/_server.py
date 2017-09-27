@@ -38,6 +38,15 @@ class _OpenTracingServicerContext(grpc.ServicerContext, ActiveSpanSource):
     def peer(self, *args, **kwargs):
         return self._servicer_context.peer(*args, **kwargs)
 
+    def peer_identities(self, *args, **kwargs):
+        return self._servicer_context.peer_identities(*args, **kwargs)
+
+    def peer_identity_key(self, *args, **kwargs):
+        return self._servicer_context.peer_identity_key(*args, **kwargs)
+
+    def auth_context(self, *args, **kwargs):
+        return self._servicer_context.auth_context(*args, **kwargs)
+
     def send_initial_metadata(self, *args, **kwargs):
         return self._servicer_context.send_initial_metadata(*args, **kwargs)
 
@@ -127,8 +136,8 @@ class OpenTracingServerInterceptor(grpcext.UnaryServerInterceptor,
                 request=request)
             if self._log_payloads:
                 span.log_kv({'request': request})
-            servicer_context = _OpenTracingServicerContext(servicer_context,
-                                                           span)
+            servicer_context = _OpenTracingServicerContext(
+                servicer_context, span)
             try:
                 response = handler(request, servicer_context)
             except:
@@ -163,8 +172,8 @@ class OpenTracingServerInterceptor(grpcext.UnaryServerInterceptor,
             if self._log_payloads:
                 request_or_iterator = log_or_wrap_request_or_iterator(
                     span, server_info.is_client_stream, request_or_iterator)
-            servicer_context = _OpenTracingServicerContext(servicer_context,
-                                                           span)
+            servicer_context = _OpenTracingServicerContext(
+                servicer_context, span)
             try:
                 result = handler(request_or_iterator, servicer_context)
                 for response in result:
@@ -197,8 +206,8 @@ class OpenTracingServerInterceptor(grpcext.UnaryServerInterceptor,
             if self._log_payloads:
                 request_or_iterator = log_or_wrap_request_or_iterator(
                     span, server_info.is_client_stream, request_or_iterator)
-            servicer_context = _OpenTracingServicerContext(servicer_context,
-                                                           span)
+            servicer_context = _OpenTracingServicerContext(
+                servicer_context, span)
             try:
                 response = handler(request_or_iterator, servicer_context)
             except:
