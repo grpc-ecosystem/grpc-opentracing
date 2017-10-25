@@ -1,28 +1,16 @@
 package io.opentracing.contrib;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-
-import javax.annotation.Nullable;
-
-import io.grpc.CallOptions;
-import io.grpc.Channel;
-import io.grpc.ClientCall;
-import io.grpc.ClientInterceptor;
-import io.grpc.ClientInterceptors;
-import io.grpc.ForwardingClientCall;
-import io.grpc.ForwardingClientCallListener;
-import io.grpc.Metadata;
-import io.grpc.MethodDescriptor;
-import io.grpc.Status;
+import com.google.common.collect.ImmutableMap;
+import io.grpc.*;
 import io.opentracing.Span;
 import io.opentracing.Tracer;
 import io.opentracing.propagation.Format;
 import io.opentracing.propagation.TextMap;
+
+import javax.annotation.Nullable;
+import java.util.Map.Entry;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /** 
  * An intercepter that applies tracing via OpenTracing to all client requests. 
@@ -80,13 +68,6 @@ public class ClientTracingInterceptor implements ClientInterceptor {
 
         for (ClientRequestAttribute attr : this.tracedAttributes) {
             switch (attr) {
-                case AFFINITY:
-                    if (callOptions.getAffinity() == null) {
-                        span.setTag("grpc.affinity", "null");
-                    } else {
-                        span.setTag("grpc.affinity", callOptions.getAffinity().toString());
-                    }  
-                    break;
                 case ALL_CALL_OPTIONS:
                     span.setTag("grpc.call_options", callOptions.toString());
                     break;
@@ -130,8 +111,8 @@ public class ClientTracingInterceptor implements ClientInterceptor {
 
             @Override
             public void start(Listener<RespT> responseListener, Metadata headers) {
-                if (verbose) { 
-                    span.log("Started call", null);
+                if (verbose) {
+                    span.log("Started call");
                 }
                 if (tracedAttributes.contains(ClientRequestAttribute.HEADERS)) {
                     span.setTag("grpc.headers", headers.toString()); 
@@ -155,21 +136,21 @@ public class ClientTracingInterceptor implements ClientInterceptor {
 
                     @Override
                     public void onHeaders(Metadata headers) {
-                        if (verbose) { span.log("Response headers received", headers.toString()); }
+                        if (verbose) { span.log(ImmutableMap.of("Response headers received", headers.toString())); }
                         delegate().onHeaders(headers);
                     }
 
                     @Override
                     public void onMessage(RespT message) {
-                        if (streaming || verbose) { span.log("Response received", null); }
+                        if (streaming || verbose) { span.log("Response received"); }
                         delegate().onMessage(message);
                     }
 
                     @Override 
                     public void onClose(Status status, Metadata trailers) {
                         if (verbose) { 
-                            if (status.getCode().value() == 0) { span.log("Call closed", null); }
-                            else { span.log("Call failed", status.getDescription()); }
+                            if (status.getCode().value() == 0) { span.log("Call closed"); }
+                            else { span.log(ImmutableMap.of("Call failed", status.getDescription())); }
                         }
                         span.finish();
                         delegate().onClose(status, trailers);
@@ -187,22 +168,22 @@ public class ClientTracingInterceptor implements ClientInterceptor {
                     errorMessage = message;
                 }
                 if (cause == null) {
-                    span.log(errorMessage, null);
+                    span.log(errorMessage);
                 } else {
-                    span.log(errorMessage, cause.getMessage());
+                    span.log(ImmutableMap.of(errorMessage, cause.getMessage()));
                 }
                 delegate().cancel(message, cause);
             }
 
             @Override
             public void halfClose() {
-                if (streaming) { span.log("Finished sending messages", null); }
+                if (streaming) { span.log("Finished sending messages"); }
                 delegate().halfClose();
             }
 
             @Override
             public void sendMessage(ReqT message) {
-                if (streaming || verbose) { span.log("Message sent", null); }
+                if (streaming || verbose) { span.log("Message sent"); }
                 delegate().sendMessage(message);
             }
         };
@@ -210,9 +191,9 @@ public class ClientTracingInterceptor implements ClientInterceptor {
     
     private Span createSpanFromParent(Span parentSpan, String operationName) {
         if (parentSpan == null) {
-            return tracer.buildSpan(operationName).start();
+            return tracer.buildSpan(operationName).startManual();
         } else {
-            return tracer.buildSpan(operationName).asChildOf(parentSpan).start();
+            return tracer.buildSpan(operationName).asChildOf(parentSpan).startManual();
         }
     }
 
@@ -304,7 +285,6 @@ public class ClientTracingInterceptor implements ClientInterceptor {
         METHOD_NAME,
         DEADLINE,
         COMPRESSOR,
-        AFFINITY,
         AUTHORITY,
         ALL_CALL_OPTIONS,
         HEADERS

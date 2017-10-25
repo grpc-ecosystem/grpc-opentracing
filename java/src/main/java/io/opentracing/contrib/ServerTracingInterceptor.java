@@ -1,5 +1,6 @@
 package io.opentracing.contrib;
 
+import com.google.common.collect.ImmutableMap;
 import io.grpc.BindableService;
 import io.grpc.Context;
 import io.grpc.Contexts;
@@ -117,26 +118,26 @@ public class ServerTracingInterceptor implements ServerInterceptor {
 
             @Override
             public void onMessage(ReqT message) {
-                if (streaming || verbose) { span.log("Message received", message); }
+                if (streaming || verbose) { span.log(ImmutableMap.of("Message received", message)); }
                 delegate().onMessage(message);
             }
 
             @Override 
             public void onHalfClose() {
-                if (streaming) { span.log("Client finished sending messages", null); }
+                if (streaming) { span.log("Client finished sending messages"); }
                 delegate().onHalfClose();
             }
 
             @Override
             public void onCancel() {
-                span.log("Call cancelled", null);
+                span.log("Call cancelled");
                 span.finish();
                 delegate().onCancel();
             }
 
             @Override
             public void onComplete() {
-                if (verbose) { span.log("Call completed", null); }
+                if (verbose) { span.log("Call completed"); }
                 span.finish();
                 delegate().onComplete();
             }
@@ -151,14 +152,14 @@ public class ServerTracingInterceptor implements ServerInterceptor {
             SpanContext parentSpanCtx = tracer.extract(Format.Builtin.HTTP_HEADERS, 
                 new TextMapExtractAdapter(headers));
             if (parentSpanCtx == null) {
-                span = tracer.buildSpan(operationName).start();
+                span = tracer.buildSpan(operationName).startManual();
             } else {
-                span = tracer.buildSpan(operationName).asChildOf(parentSpanCtx).start();
+                span = tracer.buildSpan(operationName).asChildOf(parentSpanCtx).startManual();
             }
         } catch (IllegalArgumentException iae){
             span = tracer.buildSpan(operationName)
                 .withTag("Error", "Extract failed and an IllegalArgumentException was thrown")
-                .start();
+                .startManual();
         }
         return span;  
     }
