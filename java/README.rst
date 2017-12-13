@@ -130,7 +130,7 @@ A ``ServerTracingInterceptor`` uses default settings, which you can override by 
 Client Tracing
 ==============
 
-A ``ClientTracingInterceptor`` also has default settings, which you can override by creating it using a ``ServerTracingInterceptor.Builder``.
+A ``ClientTracingInterceptor`` also has default settings, which you can override by creating it using a ``ClientTracingInterceptor.Builder``.
 
 - ``withOperationName(String operationName)``: Define how the operation name is constructed for all spans created for this intercepted client. Default is the name of the RPC method. More details in the `Operation Name`_ section.
 - ``withActiveSpanSource(ActiveSpanSource activeSpanSource)``: Define how to extract the current active span, if any. This is needed if you want your client to continue a trace instead of starting a new one. More details in the `Active Span Source`_ section.
