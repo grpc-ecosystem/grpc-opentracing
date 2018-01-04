@@ -53,6 +53,11 @@ class _OpenTracingServicerContext(grpc.ServicerContext, ActiveSpanSource):
     def set_trailing_metadata(self, *args, **kwargs):
         return self._servicer_context.set_trailing_metadata(*args, **kwargs)
 
+    def abort(self, *args, **kwargs):
+        if not hasattr(self._servicer_context, 'abort'):
+            raise RuntimeError('abort() is not supported with the installed version of grpcio')
+        return self._servicer_context.abort(*args, **kwargs)
+
     def set_code(self, code):
         self.code = code
         return self._servicer_context.set_code(code)
