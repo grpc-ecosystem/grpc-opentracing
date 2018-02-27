@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27130.2020
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GrpcOpenTracing", "GrpcOpenTracing\GrpcOpenTracing.csproj", "{ADA91FF5-40F4-436E-90EC-1F20138DCCF8}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GrpcOpenTracingTest", "GrpcOpenTracingTest\GrpcOpenTracingTest.csproj", "{7BE004FC-793E-4D39-8DAF-D0F9FD6E6205}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTracing", "..\opentracing-csharp\src\OpenTracing\OpenTracing.csproj", "{044C584C-495F-4A39-9A1F-842B63D11860}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{ADA91FF5-40F4-436E-90EC-1F20138DCCF8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ADA91FF5-40F4-436E-90EC-1F20138DCCF8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ADA91FF5-40F4-436E-90EC-1F20138DCCF8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ADA91FF5-40F4-436E-90EC-1F20138DCCF8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7BE004FC-793E-4D39-8DAF-D0F9FD6E6205}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7BE004FC-793E-4D39-8DAF-D0F9FD6E6205}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7BE004FC-793E-4D39-8DAF-D0F9FD6E6205}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7BE004FC-793E-4D39-8DAF-D0F9FD6E6205}.Release|Any CPU.Build.0 = Release|Any CPU
+		{044C584C-495F-4A39-9A1F-842B63D11860}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{044C584C-495F-4A39-9A1F-842B63D11860}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{044C584C-495F-4A39-9A1F-842B63D11860}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{044C584C-495F-4A39-9A1F-842B63D11860}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {090F0273-DD20-4E48-91F3-DA8899862364}
+	EndGlobalSection
+EndGlobal

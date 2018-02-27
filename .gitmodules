@@ -1,0 +1,3 @@
+[submodule "csharp/opentracing-csharp"]
+	path = csharp/opentracing-csharp
+	url = https://github.com/opentracing/opentracing-csharp.git

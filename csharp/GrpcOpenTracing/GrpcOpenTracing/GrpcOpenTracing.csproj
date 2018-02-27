@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard1.5</TargetFramework>
+    <StartupObject></StartupObject>
+    <ApplicationIcon />
+    <OutputType>Library</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Grpc" Version="1.10.0-pre1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\opentracing-csharp\src\OpenTracing\OpenTracing.csproj" />
+  </ItemGroup>
+
+</Project>
