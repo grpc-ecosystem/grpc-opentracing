@@ -3,7 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Grpc.Core;
 
-namespace GrpcOpenTracing
+namespace GrpcOpenTracing.Streaming
 {
     internal class TracingAsyncStreamReader<T> : IAsyncStreamReader<T>
     {

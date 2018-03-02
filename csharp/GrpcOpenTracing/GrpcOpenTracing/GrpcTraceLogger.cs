@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using OpenTracing;
 
 namespace GrpcOpenTracing
@@ -16,12 +17,20 @@ namespace GrpcOpenTracing
 
         public void Request(TRequest req)
         {
-            this.span.Log("gRPC request: " + req);
+            this.span.Log(new Dictionary<string, object>
+            {
+                { LogFields.Event, "gRPC request" },
+                { "data", req }
+            });
         }
 
         public void Response(TResponse rsp)
         {
-            this.span.Log("gRPC response: " + rsp);
+            this.span.Log(new Dictionary<string, object>
+            {
+                { LogFields.Event, "gRPC response" },
+                { "data", rsp }
+            });
         }
 
         public void FinishSuccess()

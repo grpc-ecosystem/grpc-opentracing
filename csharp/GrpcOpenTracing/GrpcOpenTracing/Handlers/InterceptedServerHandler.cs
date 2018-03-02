@@ -2,10 +2,13 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Grpc.Core;
+using GrpcOpenTracing.Propagation;
+using GrpcOpenTracing.Streaming;
 using OpenTracing;
 using OpenTracing.Propagation;
+using OpenTracing.Tag;
 
-namespace GrpcOpenTracing
+namespace GrpcOpenTracing.Handlers
 {
     internal class InterceptedServerHandler<TRequest, TResponse>
         where TRequest : class
@@ -25,8 +28,8 @@ namespace GrpcOpenTracing
         private ISpan GetSpanFromContext(ITracer tracer)
         {
             return GetSpanFromHeaders(tracer, context.RequestHeaders, this.context.Method)
-                .SetTag("component", "grpc")
-                .SetTag("span.kind", "server")
+                .SetTag(Tags.Component, Constants.TAGS_COMPONENT)
+                .SetTag(Tags.SpanKind, Tags.SpanKindServer)
                 .SetTag("peer.address", this.context.Peer)
                 .SetTag("grpc.method_name", this.context.Method)
                 .SetTag("grpc.headers", string.Join("; ", this.context.RequestHeaders.Select(e => $"{e.Key} = {e.Value}")));
@@ -43,8 +46,7 @@ namespace GrpcOpenTracing
                 {
                     spanBuilder = spanBuilder.AsChildOf(parentSpanCtx);
                 }
-                span = spanBuilder.Start();
-                tracer.ScopeManager.Activate(span, false);
+                span = spanBuilder.StartActive(false).Span;
             }
             catch (Exception ex)
             {

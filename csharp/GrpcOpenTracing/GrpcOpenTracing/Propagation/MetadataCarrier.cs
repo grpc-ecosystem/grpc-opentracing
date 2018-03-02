@@ -4,7 +4,7 @@ using System.Linq;
 using Grpc.Core;
 using OpenTracing.Propagation;
 
-namespace GrpcOpenTracing
+namespace GrpcOpenTracing.Propagation
 {
     internal class MetadataCarrier : ITextMap
     {

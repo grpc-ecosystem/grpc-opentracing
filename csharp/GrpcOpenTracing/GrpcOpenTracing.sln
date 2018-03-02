@@ -7,7 +7,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GrpcOpenTracing", "GrpcOpen
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GrpcOpenTracingTest", "GrpcOpenTracingTest\GrpcOpenTracingTest.csproj", "{7BE004FC-793E-4D39-8DAF-D0F9FD6E6205}"
 EndProject
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

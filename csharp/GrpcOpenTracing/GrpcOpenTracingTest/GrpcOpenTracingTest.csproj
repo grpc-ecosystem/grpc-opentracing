@@ -12,7 +12,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\GrpcOpenTracing\GrpcOpenTracing.csproj" />
-    <ProjectReference Include="..\jaeger-client-csharp\jaeger-client-csharp.csproj" />
   </ItemGroup>
 
 </Project>

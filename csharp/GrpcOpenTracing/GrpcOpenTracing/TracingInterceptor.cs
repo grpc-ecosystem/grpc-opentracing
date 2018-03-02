@@ -3,6 +3,7 @@ using Grpc.Core.Interceptors;
 using Grpc.Core.Utils;
 using OpenTracing;
 using System.Threading.Tasks;
+using GrpcOpenTracing.Handlers;
 
 namespace GrpcOpenTracing
 {

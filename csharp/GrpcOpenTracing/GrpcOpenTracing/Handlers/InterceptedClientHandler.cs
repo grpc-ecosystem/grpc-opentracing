@@ -1,10 +1,13 @@
 ﻿using System;
 using Grpc.Core;
 using Grpc.Core.Interceptors;
+using GrpcOpenTracing.Propagation;
+using GrpcOpenTracing.Streaming;
 using OpenTracing;
 using OpenTracing.Propagation;
+using OpenTracing.Tag;
 
-namespace GrpcOpenTracing
+namespace GrpcOpenTracing.Handlers
 {
     internal class InterceptedClientHandler<TRequest, TResponse> 
         where TRequest : class 
@@ -29,9 +32,9 @@ namespace GrpcOpenTracing
 
         private ISpan InitializeSpanWithHeaders(ITracer tracer)
         {
-            return CreateSpanFromParent(tracer, this.context.Method.Name)
-                .SetTag("component", "grpc")
-                .SetTag("span.kind", "client");
+            return CreateSpanFromParent(tracer, this.context.Method.FullName)
+                .SetTag(Tags.Component, Constants.TAGS_COMPONENT)
+                .SetTag(Tags.SpanKind, Tags.SpanKindClient);
             //.SetTag("peer.address", this.context.Host)
             //.SetTag("grpc.method_name", this.context.Method.Name)
             //.SetTag("grpc.headers", string.Join("; ", this.context.Options.Headers.Select(e => $"{e.Key} = {e.Value}")));
@@ -42,12 +45,8 @@ namespace GrpcOpenTracing
             ISpan span;
             try
             {
-                ISpan parentSpan = tracer.ActiveSpan;
+                // Parent span is implicitly set by the builder.
                 var spanBuilder = tracer.BuildSpan(operationName);
-                if (parentSpan != null)
-                {
-                    spanBuilder = spanBuilder.AsChildOf(parentSpan);
-                }
                 span = spanBuilder.Start();
             }
             catch (Exception ex)

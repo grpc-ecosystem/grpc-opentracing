@@ -1,17 +1,33 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
-using Grpc.Core;
+﻿using Grpc.Core;
 using Grpc.Core.Interceptors;
 using GrpcOpenTracing;
 using OpenTracing.Mock;
-using OpenTracing.Noop;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Tutorial;
 
 namespace GrpcOpenTracingTest
 {
     class Program
     {
-        private static readonly TracingInterceptor tracingInterceptor = new TracingInterceptor(new MockTracer());
+        private class ConsoleMockTracer : MockTracer
+        {
+            protected override void OnSpanFinished(MockSpan span)
+            {
+                Console.WriteLine(span);
+                Console.WriteLine("Tags:");
+                Console.WriteLine(string.Join("; ", span.Tags.Select(e => $"{e.Key} = {e.Value}")));
+                Console.WriteLine("Logs:");
+                span.LogEntries.ForEach(entry => 
+                    Console.WriteLine($"Timestamp: {entry.Timestamp}, Fields: " 
+                                      + string.Join("; ", entry.Fields.Select(e => $"{e.Key} = {e.Value}"))));
+                Console.WriteLine();
+            }
+        }
+
+        private static readonly TracingInterceptor tracingInterceptor = new TracingInterceptor(new ConsoleMockTracer());
 
         static void Main()
         {
@@ -53,7 +69,16 @@ namespace GrpcOpenTracingTest
                 // Ignore
             }
 
+            try
+            {
+                var response5 = await client.GetNameAsync(new Person());
+            }
+            catch
+            {
+            }
+
             await server.ShutdownAsync();
+            Console.ReadLine();
         }
         
         public class PhoneImpl : Phone.PhoneBase
@@ -72,7 +97,6 @@ namespace GrpcOpenTracingTest
                 while (await requestStream.MoveNext())
                 {
                     request = requestStream.Current;
-
                     if (string.IsNullOrEmpty(request.Name))
                         throw new RpcException(new Status(StatusCode.InvalidArgument, "name must not be empty"));
                 }
