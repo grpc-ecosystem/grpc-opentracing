@@ -7,7 +7,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GrpcOpenTracing", "GrpcOpen
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GrpcOpenTracingTest", "GrpcOpenTracingTest\GrpcOpenTracingTest.csproj", "{7BE004FC-793E-4D39-8DAF-D0F9FD6E6205}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTracing", "..\opentracing-csharp\src\OpenTracing\OpenTracing.csproj", "{044C584C-495F-4A39-9A1F-842B63D11860}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,10 +22,6 @@ Global
 		{7BE004FC-793E-4D39-8DAF-D0F9FD6E6205}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7BE004FC-793E-4D39-8DAF-D0F9FD6E6205}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7BE004FC-793E-4D39-8DAF-D0F9FD6E6205}.Release|Any CPU.Build.0 = Release|Any CPU
-		{044C584C-495F-4A39-9A1F-842B63D11860}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{044C584C-495F-4A39-9A1F-842B63D11860}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{044C584C-495F-4A39-9A1F-842B63D11860}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{044C584C-495F-4A39-9A1F-842B63D11860}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

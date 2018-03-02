@@ -11,8 +11,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\opentracing-csharp\src\OpenTracing\OpenTracing.csproj" />
     <ProjectReference Include="..\GrpcOpenTracing\GrpcOpenTracing.csproj" />
+    <ProjectReference Include="..\jaeger-client-csharp\jaeger-client-csharp.csproj" />
   </ItemGroup>
 
 </Project>
