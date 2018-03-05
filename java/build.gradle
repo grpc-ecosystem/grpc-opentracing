@@ -53,12 +53,12 @@ jar {
 }
 
 dependencies {
-    compile 'io.grpc:grpc-core:1.6.1'
-    compile 'io.opentracing:opentracing-api:0.30.0'
+    compile 'io.grpc:grpc-core:1.10.0'
+    compile 'io.opentracing:opentracing-api:0.31.0'
     testCompile 'io.opentracing:opentracing-mock:0.30.0'
-    testCompile 'io.grpc:grpc-protobuf:1.6.1'
-    testCompile 'io.grpc:grpc-netty:1.6.1'
-    testCompile 'io.grpc:grpc-stub:1.6.1'
+    testCompile 'io.grpc:grpc-protobuf:1.10.0'
+    testCompile 'io.grpc:grpc-netty:1.10.0'
+    testCompile 'io.grpc:grpc-stub:1.10.0'
     testCompile 'junit:junit:4.12'
 }
 
