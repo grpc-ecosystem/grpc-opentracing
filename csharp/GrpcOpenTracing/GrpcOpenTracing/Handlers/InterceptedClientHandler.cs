@@ -25,18 +25,18 @@ namespace GrpcOpenTracing.Handlers
                     context.Options.WithHeaders(new Metadata())); // Add empty metadata to options
             }
 
-            ISpan span = InitializeSpanWithHeaders(tracer);
+            var span = InitializeSpanWithHeaders(tracer);
             this.logger = new GrpcTraceLogger<TRequest, TResponse>(span);
             tracer.Inject(span.Context, BuiltinFormats.HttpHeaders, new MetadataCarrier(this.context.Options.Headers));
         }
 
         private ISpan InitializeSpanWithHeaders(ITracer tracer)
         {
-            return CreateSpanFromParent(tracer, this.context.Method.FullName)
+            return CreateSpanFromParent(tracer, $"Client {context.Method.FullName}")
                 .SetTag(Tags.Component, Constants.TAGS_COMPONENT)
-                .SetTag(Tags.SpanKind, Tags.SpanKindClient);
+                .SetTag(Tags.SpanKind, Tags.SpanKindClient)
+                .SetTag("grpc.method_name", context.Method.FullName);
             //.SetTag("peer.address", this.context.Host)
-            //.SetTag("grpc.method_name", this.context.Method.Name)
             //.SetTag("grpc.headers", string.Join("; ", this.context.Options.Headers.Select(e => $"{e.Key} = {e.Value}")));
         }
 
@@ -45,8 +45,11 @@ namespace GrpcOpenTracing.Handlers
             ISpan span;
             try
             {
-                // Parent span is implicitly set by the builder.
                 var spanBuilder = tracer.BuildSpan(operationName);
+                if (tracer.ActiveSpan != null)
+                {
+                    spanBuilder = spanBuilder.AsChildOf(tracer.ActiveSpan.Context);
+                }
                 span = spanBuilder.Start();
             }
             catch (Exception ex)

@@ -1,12 +1,12 @@
-﻿using System;
-using System.Linq;
-using System.Threading.Tasks;
-using Grpc.Core;
+﻿using Grpc.Core;
 using GrpcOpenTracing.Propagation;
 using GrpcOpenTracing.Streaming;
 using OpenTracing;
 using OpenTracing.Propagation;
 using OpenTracing.Tag;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace GrpcOpenTracing.Handlers
 {
@@ -27,12 +27,17 @@ namespace GrpcOpenTracing.Handlers
 
         private ISpan GetSpanFromContext(ITracer tracer)
         {
-            return GetSpanFromHeaders(tracer, context.RequestHeaders, this.context.Method)
+            return GetSpanFromHeaders(tracer, context.RequestHeaders, $"Server {this.context.Method}")
                 .SetTag(Tags.Component, Constants.TAGS_COMPONENT)
                 .SetTag(Tags.SpanKind, Tags.SpanKindServer)
                 .SetTag("peer.address", this.context.Peer)
                 .SetTag("grpc.method_name", this.context.Method)
-                .SetTag("grpc.headers", string.Join("; ", this.context.RequestHeaders.Select(e => $"{e.Key} = {e.Value}")));
+                .SetTag("grpc.headers", GetGrpcHeaders());
+        }
+
+        private string GetGrpcHeaders()
+        {
+            return string.Join("; ", this.context.RequestHeaders.Where(e => !e.Key.Equals("x-letstrace-trace-context")).Select(e => $"{e.Key} = {e.Value}"));
         }
 
         private ISpan GetSpanFromHeaders(ITracer tracer, Metadata metadata, string operationName)

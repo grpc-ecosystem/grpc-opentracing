@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Grpc" Version="1.10.0-pre1" />
+    <PackageReference Include="Grpc" Version="1.10.0" />
     <PackageReference Include="OpenTracing" Version="0.11.0" />
   </ItemGroup>
 
