@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27130.2020
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GrpcOpenTracing", "GrpcOpenTracing\GrpcOpenTracing.csproj", "{ADA91FF5-40F4-436E-90EC-1F20138DCCF8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Grpc.OpenTracing", "Grpc.OpenTracing\Grpc.OpenTracing.csproj", "{ADA91FF5-40F4-436E-90EC-1F20138DCCF8}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GrpcOpenTracingTest", "GrpcOpenTracingTest\GrpcOpenTracingTest.csproj", "{7BE004FC-793E-4D39-8DAF-D0F9FD6E6205}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Grpc.OpenTracing.Test", "Grpc.OpenTracing.Test\Grpc.OpenTracing.Test.csproj", "{7BE004FC-793E-4D39-8DAF-D0F9FD6E6205}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
