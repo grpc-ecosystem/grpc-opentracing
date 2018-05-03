@@ -1,99 +1,79 @@
 ﻿using System;
 using Grpc.Core;
 using Grpc.Core.Interceptors;
-using GrpcOpenTracing.Propagation;
-using GrpcOpenTracing.Streaming;
+using Grpc.OpenTracing.Propagation;
+using Grpc.OpenTracing.Streaming;
 using OpenTracing;
 using OpenTracing.Propagation;
 using OpenTracing.Tag;
 
-namespace GrpcOpenTracing.Handlers
+namespace Grpc.OpenTracing.Handlers
 {
     internal class InterceptedClientHandler<TRequest, TResponse> 
         where TRequest : class 
         where TResponse : class
     {
-        private readonly GrpcTraceLogger<TRequest, TResponse> logger;
-        private readonly ClientInterceptorContext<TRequest, TResponse> context;
+        private readonly GrpcTraceLogger<TRequest, TResponse> _logger;
+        private readonly ClientInterceptorContext<TRequest, TResponse> _context;
 
         public InterceptedClientHandler(ITracer tracer, ClientInterceptorContext<TRequest, TResponse> context)
         {
-            this.context = context;
+            _context = context;
             if (context.Options.Headers == null)
             {
-                this.context = new ClientInterceptorContext<TRequest, TResponse>(context.Method, context.Host, 
+                _context = new ClientInterceptorContext<TRequest, TResponse>(context.Method, context.Host, 
                     context.Options.WithHeaders(new Metadata())); // Add empty metadata to options
             }
 
             var span = InitializeSpanWithHeaders(tracer);
-            this.logger = new GrpcTraceLogger<TRequest, TResponse>(span);
-            tracer.Inject(span.Context, BuiltinFormats.HttpHeaders, new MetadataCarrier(this.context.Options.Headers));
+            _logger = new GrpcTraceLogger<TRequest, TResponse>(span);
+            tracer.Inject(span.Context, BuiltinFormats.HttpHeaders, new MetadataCarrier(_context.Options.Headers));
         }
 
         private ISpan InitializeSpanWithHeaders(ITracer tracer)
         {
-            return CreateSpanFromParent(tracer, $"Client {context.Method.FullName}")
-                .SetTag(Tags.Component, Constants.TAGS_COMPONENT)
-                .SetTag(Tags.SpanKind, Tags.SpanKindClient)
-                .SetTag("grpc.method_name", context.Method.FullName);
-            //.SetTag("peer.address", this.context.Host)
-            //.SetTag("grpc.headers", string.Join("; ", this.context.Options.Headers.Select(e => $"{e.Key} = {e.Value}")));
-        }
-
-        private ISpan CreateSpanFromParent(ITracer tracer, string operationName)
-        {
-            ISpan span;
-            try
-            {
-                var spanBuilder = tracer.BuildSpan(operationName);
-                if (tracer.ActiveSpan != null)
-                {
-                    spanBuilder = spanBuilder.AsChildOf(tracer.ActiveSpan.Context);
-                }
-                span = spanBuilder.Start();
-            }
-            catch (Exception ex)
-            {
-                span = tracer.BuildSpan(operationName)
-                    .WithException(ex)
-                    .Start();
-            }
-            return span;
+            return tracer.BuildSpan($"Client {_context.Method.FullName}")
+                .WithTag(Tags.Component, Constants.TAGS_COMPONENT)
+                .WithTag(Tags.SpanKind, Tags.SpanKindClient)
+                .WithTag("grpc.method_name", _context.Method.FullName)
+                //.WithTag("peer.address", this.context.Host)
+                //.WithTag("grpc.headers", string.Join("; ", this.context.Options.Headers.Select(e => $"{e.Key} = {e.Value}")))
+                .Start();
         }
 
         public TResponse BlockingUnaryCall(TRequest request, Interceptor.BlockingUnaryCallContinuation<TRequest, TResponse> continuation)
         {
             try
             {
-                this.logger.Request(request);
-                var response = continuation(request, this.context);
-                this.logger.Response(response);
-                this.logger.FinishSuccess();
+                _logger.Request(request);
+                var response = continuation(request, _context);
+                _logger.Response(response);
+                _logger.FinishSuccess();
                 return response;
             }
             catch (Exception ex)
             {
-                this.logger.FinishException(ex);
+                _logger.FinishException(ex);
                 throw;
             }
         }
 
         public AsyncUnaryCall<TResponse> AsyncUnaryCall(TRequest request, Interceptor.AsyncUnaryCallContinuation<TRequest, TResponse> continuation)
         {
-            this.logger.Request(request);
-            var rspCnt = continuation(request, this.context);
+            _logger.Request(request);
+            var rspCnt = continuation(request, _context);
             var rspAsync = rspCnt.ResponseAsync.ContinueWith(rspTask =>
             {
                 try
                 {
                     var response = rspTask.Result;
-                    this.logger.Response(response);
-                    this.logger.FinishSuccess();
+                    _logger.Response(response);
+                    _logger.FinishSuccess();
                     return response;
                 }
                 catch (AggregateException ex)
                 {
-                    this.logger.FinishException(ex.InnerException);
+                    _logger.FinishException(ex.InnerException);
                     throw ex.InnerException;
                 }
             });
@@ -102,28 +82,28 @@ namespace GrpcOpenTracing.Handlers
 
         public AsyncServerStreamingCall<TResponse> AsyncServerStreamingCall(TRequest request, Interceptor.AsyncServerStreamingCallContinuation<TRequest, TResponse> continuation)
         {
-            this.logger.Request(request);
-            var rspCnt = continuation(request, this.context);
-            var tracingResponseStream = new TracingAsyncStreamReader<TResponse>(rspCnt.ResponseStream, this.logger.Response, this.logger.FinishSuccess, this.logger.FinishException);
+            _logger.Request(request);
+            var rspCnt = continuation(request, _context);
+            var tracingResponseStream = new TracingAsyncStreamReader<TResponse>(rspCnt.ResponseStream, _logger.Response, _logger.FinishSuccess, _logger.FinishException);
             return new AsyncServerStreamingCall<TResponse>(tracingResponseStream, rspCnt.ResponseHeadersAsync, rspCnt.GetStatus, rspCnt.GetTrailers, rspCnt.Dispose);
         }
 
         public AsyncClientStreamingCall<TRequest, TResponse> AsyncClientStreamingCall(Interceptor.AsyncClientStreamingCallContinuation<TRequest, TResponse> continuation)
         {
-            var rspCnt = continuation(this.context);
-            var tracingRequestStream = new TracingClientStreamWriter<TRequest>(rspCnt.RequestStream, this.logger.Request);
+            var rspCnt = continuation(_context);
+            var tracingRequestStream = new TracingClientStreamWriter<TRequest>(rspCnt.RequestStream, _logger.Request);
             var rspAsync = rspCnt.ResponseAsync.ContinueWith(rspTask =>
             {
                 try
                 {
                     var response = rspTask.Result;
-                    this.logger.Response(response);
-                    this.logger.FinishSuccess();
+                    _logger.Response(response);
+                    _logger.FinishSuccess();
                     return response;
                 }
                 catch (AggregateException ex)
                 {
-                    this.logger.FinishException(ex.InnerException);
+                    _logger.FinishException(ex.InnerException);
                     throw ex.InnerException;
                 }
             });
@@ -132,9 +112,9 @@ namespace GrpcOpenTracing.Handlers
 
         public AsyncDuplexStreamingCall<TRequest, TResponse> AsyncDuplexStreamingCall(Interceptor.AsyncDuplexStreamingCallContinuation<TRequest, TResponse> continuation)
         {
-            var rspCnt = continuation(this.context);
-            var tracingRequestStream = new TracingClientStreamWriter<TRequest>(rspCnt.RequestStream, this.logger.Request);
-            var tracingResponseStream = new TracingAsyncStreamReader<TResponse>(rspCnt.ResponseStream, this.logger.Response, this.logger.FinishSuccess, this.logger.FinishException);
+            var rspCnt = continuation(_context);
+            var tracingRequestStream = new TracingClientStreamWriter<TRequest>(rspCnt.RequestStream, _logger.Request);
+            var tracingResponseStream = new TracingAsyncStreamReader<TResponse>(rspCnt.ResponseStream, _logger.Response, _logger.FinishSuccess, _logger.FinishException);
             return new AsyncDuplexStreamingCall<TRequest, TResponse>(tracingRequestStream, tracingResponseStream, rspCnt.ResponseHeadersAsync, rspCnt.GetStatus, rspCnt.GetTrailers, rspCnt.Dispose);
         }
     }

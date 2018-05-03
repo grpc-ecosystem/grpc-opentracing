@@ -2,9 +2,8 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard1.5</TargetFramework>
-    <StartupObject></StartupObject>
-    <ApplicationIcon />
-    <OutputType>Library</OutputType>
+    <RootNamespace>Grpc.OpenTracing</RootNamespace>
+    <AssemblyName>Grpc.OpenTracing</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>

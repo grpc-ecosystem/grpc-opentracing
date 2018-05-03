@@ -4,39 +4,31 @@ using System.Linq;
 using Grpc.Core;
 using OpenTracing.Propagation;
 
-namespace GrpcOpenTracing.Propagation
+namespace Grpc.OpenTracing.Propagation
 {
     internal class MetadataCarrier : ITextMap
     {
-        private readonly Metadata metadata;
-        private readonly Dictionary<string, string> dictionary;
+        private readonly Metadata _metadata;
 
         public MetadataCarrier(Metadata metadata)
         {
-            this.metadata = metadata;
-            this.dictionary = metadata.Where(e => !e.IsBinary).ToDictionary(e => e.Key, e => e.Value);
-        }
-
-        public string Get(string key)
-        {
-            return this.dictionary[key];
+            _metadata = metadata;
         }
 
         public void Set(string key, string value)
         {
-            if (this.dictionary.ContainsKey(key))
-            {
-                var oldEntry = this.metadata.First(e => e.Key.Equals(key));
-                this.metadata.Remove(oldEntry);
-            }
-
-            this.dictionary[key] = value;
-            this.metadata.Add(key, value);
+            _metadata.Add(key, value);
         }
 
         public IEnumerator<KeyValuePair<string, string>> GetEnumerator()
         {
-            return this.dictionary.GetEnumerator();
+            foreach (var entry in _metadata)
+            {
+                if (entry.IsBinary)
+                    continue;
+
+                yield return new KeyValuePair<string, string>(entry.Key, entry.Value);
+            }
         }
 
         IEnumerator IEnumerable.GetEnumerator()

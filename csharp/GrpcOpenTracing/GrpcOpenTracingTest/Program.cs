@@ -1,6 +1,5 @@
 ﻿using Grpc.Core;
 using Grpc.Core.Interceptors;
-using GrpcOpenTracing;
 using OpenTracing.Mock;
 using System;
 using System.Collections.Generic;
@@ -8,7 +7,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Tutorial;
 
-namespace GrpcOpenTracingTest
+namespace Grpc.OpenTracing.Test
 {
     class Program
     {

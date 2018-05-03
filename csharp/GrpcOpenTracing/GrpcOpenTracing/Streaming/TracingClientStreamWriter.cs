@@ -2,37 +2,37 @@
 using System.Threading.Tasks;
 using Grpc.Core;
 
-namespace GrpcOpenTracing.Streaming
+namespace Grpc.OpenTracing.Streaming
 {
     internal class TracingClientStreamWriter<T> : IClientStreamWriter<T>
     {
-        private readonly IClientStreamWriter<T> writer;
-        private readonly Action<T> onWrite;
-        private readonly Action onComplete;
+        private readonly IClientStreamWriter<T> _writer;
+        private readonly Action<T> _onWrite;
+        private readonly Action _onComplete;
 
         public TracingClientStreamWriter(IClientStreamWriter<T> writer, Action<T> onWrite, Action onComplete = null)
         {
-            this.writer = writer;
-            this.onWrite = onWrite;
-            this.onComplete = onComplete;
+            _writer = writer;
+            _onWrite = onWrite;
+            _onComplete = onComplete;
         }
 
         public WriteOptions WriteOptions
         {
-            get => this.writer.WriteOptions;
-            set => this.writer.WriteOptions = value;
+            get => _writer.WriteOptions;
+            set => _writer.WriteOptions = value;
         }
 
         public Task WriteAsync(T message)
         {
-            this.onWrite(message);
-            return this.writer.WriteAsync(message);
+            _onWrite(message);
+            return _writer.WriteAsync(message);
         }
 
         public Task CompleteAsync()
         {
-            this.onComplete?.Invoke();
-            return this.writer.CompleteAsync();
+            _onComplete?.Invoke();
+            return _writer.CompleteAsync();
         }
     }
 }

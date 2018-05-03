@@ -1,24 +1,22 @@
 ﻿using System;
+using System.Collections.Generic;
 using OpenTracing;
 using OpenTracing.Tag;
 
-namespace GrpcOpenTracing
+namespace Grpc.OpenTracing
 {
     public static class Extensions
     {
         public static ISpan SetException(this ISpan span, Exception ex)
         {
             return span?.SetTag(Tags.Error, true)
-                .SetTag(LogFields.ErrorKind, ex.GetType().Name)
-                .SetTag(LogFields.ErrorObject, ex.ToString())
-                .SetTag(LogFields.Message, ex.Message);
-        }
-        public static ISpanBuilder WithException(this ISpanBuilder spanBuilder, Exception ex)
-        {
-            return spanBuilder?.WithTag(Tags.Error, true)
-                .WithTag(LogFields.ErrorKind, ex.GetType().Name)
-                .WithTag(LogFields.ErrorObject, ex.ToString())
-                .WithTag(LogFields.Message, ex.Message);
+                .Log(new Dictionary<string, object>(4)
+                {
+                    {LogFields.Event, Tags.Error.Key},
+                    {LogFields.ErrorKind, ex.GetType().Name},
+                    {LogFields.ErrorObject, ex},
+                    {LogFields.Message, ex.Message}
+                });
         }
 
         public static ISpanBuilder WithTag(this ISpanBuilder spanBuilder, AbstractTag<bool> tagSetter, bool value)

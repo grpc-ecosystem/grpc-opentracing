@@ -1,4 +1,4 @@
-﻿namespace GrpcOpenTracing
+﻿namespace Grpc.OpenTracing
 {
     public static class Constants
     {

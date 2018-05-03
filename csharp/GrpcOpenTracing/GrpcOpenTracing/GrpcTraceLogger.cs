@@ -2,22 +2,23 @@
 using System.Collections.Generic;
 using OpenTracing;
 
-namespace GrpcOpenTracing
+namespace Grpc.OpenTracing
 {
     internal class GrpcTraceLogger<TRequest, TResponse> 
         where TRequest : class 
         where TResponse : class
     {
-        private readonly ISpan span;
+        private readonly ISpan _span;
 
         public GrpcTraceLogger(ISpan span)
         {
-            this.span = span;
+            _span = span;
         }
 
         public void Request(TRequest req)
         {
-            this.span.Log(new Dictionary<string, object>
+            // TODO: Only log on streaming or verbose
+            _span.Log(new Dictionary<string, object>
             {
                 { LogFields.Event, "gRPC request" },
                 { "data", req }
@@ -26,7 +27,8 @@ namespace GrpcOpenTracing
 
         public void Response(TResponse rsp)
         {
-            this.span.Log(new Dictionary<string, object>
+            // TODO: Only log on streaming or verbose
+            _span.Log(new Dictionary<string, object>
             {
                 { LogFields.Event, "gRPC response" },
                 { "data", rsp }
@@ -35,14 +37,12 @@ namespace GrpcOpenTracing
 
         public void FinishSuccess()
         {
-            this.span.Log("Call completed")
-                .Finish();
+            _span.Finish();
         }
 
         public void FinishException(Exception ex)
         {
-            this.span.Log("Call cancelled")
-                .SetException(ex)
+            _span.SetException(ex)
                 .Finish();
         }
     }
