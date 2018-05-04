@@ -1,6 +1,5 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using Grpc.Core;
 using OpenTracing.Propagation;
 
