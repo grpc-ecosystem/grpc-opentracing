@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard1.5</TargetFramework>
+    <RootNamespace>Grpc.OpenTracing</RootNamespace>
+    <AssemblyName>Grpc.OpenTracing</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Grpc" Version="1.11.0" />
+    <PackageReference Include="OpenTracing" Version="0.11.0" />
+  </ItemGroup>
+
+</Project>
