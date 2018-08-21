@@ -150,7 +150,13 @@ public class ClientTracingInterceptor implements ClientInterceptor {
                     public void onClose(Status status, Metadata trailers) {
                         if (verbose) { 
                             if (status.getCode().value() == 0) { span.log("Call closed"); }
-                            else { span.log(ImmutableMap.of("Call failed", status.getDescription())); }
+                            else if (status.getDescription() != null) {
+                                span.log(ImmutableMap.of("Call failed", status.getCode(),
+						"Failure", status.getDescription()));
+                            } 
+                            else {
+                                span.log(ImmutableMap.of("Call failed ", status.getCode()));
+                            }
                         }
                         span.finish();
                         delegate().onClose(status, trailers);
