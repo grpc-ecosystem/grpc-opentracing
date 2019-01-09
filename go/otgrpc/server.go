@@ -1,7 +1,7 @@
 package otgrpc
 
 import (
-	"github.com/opentracing/opentracing-go"
+	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/opentracing/opentracing-go/log"
 	"golang.org/x/net/context"
@@ -64,7 +64,7 @@ func OpenTracingServerInterceptor(tracer opentracing.Tracer, optFuncs ...Option)
 			serverSpan.LogFields(log.String("event", "error"), log.String("message", err.Error()))
 		}
 		if otgrpcOpts.decorator != nil {
-			otgrpcOpts.decorator(serverSpan, info.FullMethod, req, resp, err)
+			otgrpcOpts.decorator(ctx, serverSpan, info.FullMethod, req, resp, err)
 		}
 		return resp, err
 	}
@@ -117,7 +117,7 @@ func OpenTracingStreamServerInterceptor(tracer opentracing.Tracer, optFuncs ...O
 			serverSpan.LogFields(log.String("event", "error"), log.String("message", err.Error()))
 		}
 		if otgrpcOpts.decorator != nil {
-			otgrpcOpts.decorator(serverSpan, info.FullMethod, nil, nil, err)
+			otgrpcOpts.decorator(context.Background(), serverSpan, info.FullMethod, nil, nil, err)
 		}
 		return err
 	}
