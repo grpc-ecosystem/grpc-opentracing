@@ -1,10 +1,18 @@
 package io.opentracing.contrib;
 
 import static io.grpc.MethodDescriptor.generateFullMethodName;
+import static io.grpc.stub.ClientCalls.asyncBidiStreamingCall;
+import static io.grpc.stub.ClientCalls.asyncClientStreamingCall;
+import static io.grpc.stub.ClientCalls.asyncServerStreamingCall;
 import static io.grpc.stub.ClientCalls.asyncUnaryCall;
+import static io.grpc.stub.ClientCalls.blockingServerStreamingCall;
 import static io.grpc.stub.ClientCalls.blockingUnaryCall;
 import static io.grpc.stub.ClientCalls.futureUnaryCall;
+import static io.grpc.stub.ServerCalls.asyncBidiStreamingCall;
+import static io.grpc.stub.ServerCalls.asyncClientStreamingCall;
+import static io.grpc.stub.ServerCalls.asyncServerStreamingCall;
 import static io.grpc.stub.ServerCalls.asyncUnaryCall;
+import static io.grpc.stub.ServerCalls.asyncUnimplementedStreamingCall;
 import static io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall;
 
 /**
@@ -13,9 +21,9 @@ import static io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall;
  * </pre>
  */
 @javax.annotation.Generated(
-    value = "by gRPC proto compiler (version 0.15.0)",
-    comments = "Source: helloworld.proto")
-public class GreeterGrpc {
+    value = "by gRPC proto compiler (version 1.8.0)",
+    comments = "Source: src/test/proto/helloworld.proto")
+public final class GreeterGrpc {
 
   private GreeterGrpc() {}
 
@@ -23,14 +31,37 @@ public class GreeterGrpc {
 
   // Static method descriptors that strictly reflect the proto.
   @io.grpc.ExperimentalApi("https://github.com/grpc/grpc-java/issues/1901")
+  @java.lang.Deprecated // Use {@link #getSayHelloMethod()} instead. 
   public static final io.grpc.MethodDescriptor<io.opentracing.contrib.HelloRequest,
-      io.opentracing.contrib.HelloReply> METHOD_SAY_HELLO =
-      io.grpc.MethodDescriptor.create(
-          io.grpc.MethodDescriptor.MethodType.UNARY,
-          generateFullMethodName(
-              "helloworld.Greeter", "SayHello"),
-          io.grpc.protobuf.ProtoUtils.marshaller(io.opentracing.contrib.HelloRequest.getDefaultInstance()),
-          io.grpc.protobuf.ProtoUtils.marshaller(io.opentracing.contrib.HelloReply.getDefaultInstance()));
+      io.opentracing.contrib.HelloReply> METHOD_SAY_HELLO = getSayHelloMethod();
+
+  private static volatile io.grpc.MethodDescriptor<io.opentracing.contrib.HelloRequest,
+      io.opentracing.contrib.HelloReply> getSayHelloMethod;
+
+  @io.grpc.ExperimentalApi("https://github.com/grpc/grpc-java/issues/1901")
+  public static io.grpc.MethodDescriptor<io.opentracing.contrib.HelloRequest,
+      io.opentracing.contrib.HelloReply> getSayHelloMethod() {
+    io.grpc.MethodDescriptor<io.opentracing.contrib.HelloRequest, io.opentracing.contrib.HelloReply> getSayHelloMethod;
+    if ((getSayHelloMethod = GreeterGrpc.getSayHelloMethod) == null) {
+      synchronized (GreeterGrpc.class) {
+        if ((getSayHelloMethod = GreeterGrpc.getSayHelloMethod) == null) {
+          GreeterGrpc.getSayHelloMethod = getSayHelloMethod = 
+              io.grpc.MethodDescriptor.<io.opentracing.contrib.HelloRequest, io.opentracing.contrib.HelloReply>newBuilder()
+              .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
+              .setFullMethodName(generateFullMethodName(
+                  "helloworld.Greeter", "SayHello"))
+              .setSampledToLocalTracing(true)
+              .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+                  io.opentracing.contrib.HelloRequest.getDefaultInstance()))
+              .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+                  io.opentracing.contrib.HelloReply.getDefaultInstance()))
+                  .setSchemaDescriptor(new GreeterMethodDescriptorSupplier("SayHello"))
+                  .build();
+          }
+        }
+     }
+     return getSayHelloMethod;
+  }
 
   /**
    * Creates a new async stub that supports all call types for the service
@@ -48,7 +79,7 @@ public class GreeterGrpc {
   }
 
   /**
-   * Creates a new ListenableFuture-style stub that supports unary and streaming output calls on the service
+   * Creates a new ListenableFuture-style stub that supports unary calls on the service
    */
   public static GreeterFutureStub newFutureStub(
       io.grpc.Channel channel) {
@@ -60,28 +91,28 @@ public class GreeterGrpc {
    * The greeting service definition.
    * </pre>
    */
-  @java.lang.Deprecated public static interface Greeter {
+  public static abstract class GreeterImplBase implements io.grpc.BindableService {
 
     /**
      * <pre>
      * Sends a greeting
      * </pre>
      */
-    public void sayHello(io.opentracing.contrib.HelloRequest request,
-        io.grpc.stub.StreamObserver<io.opentracing.contrib.HelloReply> responseObserver);
-  }
-
-  @io.grpc.ExperimentalApi("https://github.com/grpc/grpc-java/issues/1469")
-  public static abstract class GreeterImplBase implements Greeter, io.grpc.BindableService {
-
-    @java.lang.Override
     public void sayHello(io.opentracing.contrib.HelloRequest request,
         io.grpc.stub.StreamObserver<io.opentracing.contrib.HelloReply> responseObserver) {
-      asyncUnimplementedUnaryCall(METHOD_SAY_HELLO, responseObserver);
+      asyncUnimplementedUnaryCall(getSayHelloMethod(), responseObserver);
     }
 
-    @java.lang.Override public io.grpc.ServerServiceDefinition bindService() {
-      return GreeterGrpc.bindService(this);
+    @java.lang.Override public final io.grpc.ServerServiceDefinition bindService() {
+      return io.grpc.ServerServiceDefinition.builder(getServiceDescriptor())
+          .addMethod(
+            getSayHelloMethod(),
+            asyncUnaryCall(
+              new MethodHandlers<
+                io.opentracing.contrib.HelloRequest,
+                io.opentracing.contrib.HelloReply>(
+                  this, METHODID_SAY_HELLO)))
+          .build();
     }
   }
 
@@ -90,34 +121,7 @@ public class GreeterGrpc {
    * The greeting service definition.
    * </pre>
    */
-  @java.lang.Deprecated public static interface GreeterBlockingClient {
-
-    /**
-     * <pre>
-     * Sends a greeting
-     * </pre>
-     */
-    public io.opentracing.contrib.HelloReply sayHello(io.opentracing.contrib.HelloRequest request);
-  }
-
-  /**
-   * <pre>
-   * The greeting service definition.
-   * </pre>
-   */
-  @java.lang.Deprecated public static interface GreeterFutureClient {
-
-    /**
-     * <pre>
-     * Sends a greeting
-     * </pre>
-     */
-    public com.google.common.util.concurrent.ListenableFuture<io.opentracing.contrib.HelloReply> sayHello(
-        io.opentracing.contrib.HelloRequest request);
-  }
-
-  public static class GreeterStub extends io.grpc.stub.AbstractStub<GreeterStub>
-      implements Greeter {
+  public static final class GreeterStub extends io.grpc.stub.AbstractStub<GreeterStub> {
     private GreeterStub(io.grpc.Channel channel) {
       super(channel);
     }
@@ -133,16 +137,24 @@ public class GreeterGrpc {
       return new GreeterStub(channel, callOptions);
     }
 
-    @java.lang.Override
+    /**
+     * <pre>
+     * Sends a greeting
+     * </pre>
+     */
     public void sayHello(io.opentracing.contrib.HelloRequest request,
         io.grpc.stub.StreamObserver<io.opentracing.contrib.HelloReply> responseObserver) {
       asyncUnaryCall(
-          getChannel().newCall(METHOD_SAY_HELLO, getCallOptions()), request, responseObserver);
+          getChannel().newCall(getSayHelloMethod(), getCallOptions()), request, responseObserver);
     }
   }
 
-  public static class GreeterBlockingStub extends io.grpc.stub.AbstractStub<GreeterBlockingStub>
-      implements GreeterBlockingClient {
+  /**
+   * <pre>
+   * The greeting service definition.
+   * </pre>
+   */
+  public static final class GreeterBlockingStub extends io.grpc.stub.AbstractStub<GreeterBlockingStub> {
     private GreeterBlockingStub(io.grpc.Channel channel) {
       super(channel);
     }
@@ -158,15 +170,23 @@ public class GreeterGrpc {
       return new GreeterBlockingStub(channel, callOptions);
     }
 
-    @java.lang.Override
+    /**
+     * <pre>
+     * Sends a greeting
+     * </pre>
+     */
     public io.opentracing.contrib.HelloReply sayHello(io.opentracing.contrib.HelloRequest request) {
       return blockingUnaryCall(
-          getChannel(), METHOD_SAY_HELLO, getCallOptions(), request);
+          getChannel(), getSayHelloMethod(), getCallOptions(), request);
     }
   }
 
-  public static class GreeterFutureStub extends io.grpc.stub.AbstractStub<GreeterFutureStub>
-      implements GreeterFutureClient {
+  /**
+   * <pre>
+   * The greeting service definition.
+   * </pre>
+   */
+  public static final class GreeterFutureStub extends io.grpc.stub.AbstractStub<GreeterFutureStub> {
     private GreeterFutureStub(io.grpc.Channel channel) {
       super(channel);
     }
@@ -182,27 +202,29 @@ public class GreeterGrpc {
       return new GreeterFutureStub(channel, callOptions);
     }
 
-    @java.lang.Override
+    /**
+     * <pre>
+     * Sends a greeting
+     * </pre>
+     */
     public com.google.common.util.concurrent.ListenableFuture<io.opentracing.contrib.HelloReply> sayHello(
         io.opentracing.contrib.HelloRequest request) {
       return futureUnaryCall(
-          getChannel().newCall(METHOD_SAY_HELLO, getCallOptions()), request);
+          getChannel().newCall(getSayHelloMethod(), getCallOptions()), request);
     }
   }
 
-  @java.lang.Deprecated public static abstract class AbstractGreeter extends GreeterImplBase {}
-
   private static final int METHODID_SAY_HELLO = 0;
 
-  private static class MethodHandlers<Req, Resp> implements
+  private static final class MethodHandlers<Req, Resp> implements
       io.grpc.stub.ServerCalls.UnaryMethod<Req, Resp>,
       io.grpc.stub.ServerCalls.ServerStreamingMethod<Req, Resp>,
       io.grpc.stub.ServerCalls.ClientStreamingMethod<Req, Resp>,
       io.grpc.stub.ServerCalls.BidiStreamingMethod<Req, Resp> {
-    private final Greeter serviceImpl;
+    private final GreeterImplBase serviceImpl;
     private final int methodId;
 
-    public MethodHandlers(Greeter serviceImpl, int methodId) {
+    MethodHandlers(GreeterImplBase serviceImpl, int methodId) {
       this.serviceImpl = serviceImpl;
       this.methodId = methodId;
     }
@@ -231,21 +253,56 @@ public class GreeterGrpc {
     }
   }
 
-  public static io.grpc.ServiceDescriptor getServiceDescriptor() {
-    return new io.grpc.ServiceDescriptor(SERVICE_NAME,
-        METHOD_SAY_HELLO);
+  private static abstract class GreeterBaseDescriptorSupplier
+      implements io.grpc.protobuf.ProtoFileDescriptorSupplier, io.grpc.protobuf.ProtoServiceDescriptorSupplier {
+    GreeterBaseDescriptorSupplier() {}
+
+    @java.lang.Override
+    public com.google.protobuf.Descriptors.FileDescriptor getFileDescriptor() {
+      return io.opentracing.contrib.HelloWorldProto.getDescriptor();
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Descriptors.ServiceDescriptor getServiceDescriptor() {
+      return getFileDescriptor().findServiceByName("Greeter");
+    }
   }
 
-  @java.lang.Deprecated public static io.grpc.ServerServiceDefinition bindService(
-      final Greeter serviceImpl) {
-    return io.grpc.ServerServiceDefinition.builder(getServiceDescriptor())
-        .addMethod(
-          METHOD_SAY_HELLO,
-          asyncUnaryCall(
-            new MethodHandlers<
-              io.opentracing.contrib.HelloRequest,
-              io.opentracing.contrib.HelloReply>(
-                serviceImpl, METHODID_SAY_HELLO)))
-        .build();
+  private static final class GreeterFileDescriptorSupplier
+      extends GreeterBaseDescriptorSupplier {
+    GreeterFileDescriptorSupplier() {}
+  }
+
+  private static final class GreeterMethodDescriptorSupplier
+      extends GreeterBaseDescriptorSupplier
+      implements io.grpc.protobuf.ProtoMethodDescriptorSupplier {
+    private final String methodName;
+
+    GreeterMethodDescriptorSupplier(String methodName) {
+      this.methodName = methodName;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Descriptors.MethodDescriptor getMethodDescriptor() {
+      return getServiceDescriptor().findMethodByName(methodName);
+    }
+  }
+
+  private static volatile io.grpc.ServiceDescriptor serviceDescriptor;
+
+  public static io.grpc.ServiceDescriptor getServiceDescriptor() {
+    io.grpc.ServiceDescriptor result = serviceDescriptor;
+    if (result == null) {
+      synchronized (GreeterGrpc.class) {
+        result = serviceDescriptor;
+        if (result == null) {
+          serviceDescriptor = result = io.grpc.ServiceDescriptor.newBuilder(SERVICE_NAME)
+              .setSchemaDescriptor(new GreeterFileDescriptorSupplier())
+              .addMethod(getSayHelloMethod())
+              .build();
+        }
+      }
+    }
+    return result;
   }
 }

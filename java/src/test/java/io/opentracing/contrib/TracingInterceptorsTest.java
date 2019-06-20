@@ -8,7 +8,6 @@ import org.junit.Test;
 
 import io.grpc.MethodDescriptor;
 import io.opentracing.mock.MockSpan;
-import io.opentracing.mock.MockSpan.LogEntry;
 import io.opentracing.mock.MockTracer;
 
 public class TracingInterceptorsTest {
@@ -62,8 +61,8 @@ public class TracingInterceptorsTest {
 			
 			MockSpan span = serviceTracer.finishedSpans().get(0);
 			assertEquals("span should have default name", span.operationName(), "helloworld.Greeter/SayHello");
-			assertEquals("span should have no parents", span.parentId(), 0);
-			assertEquals("span should log onMessage and onComplete", 2, span.logEntries().size());
+			assertEquals("span should have no parents", 0, span.parentId());
+			assertEquals("span should log onMessage and onComplete", 3, span.logEntries().size());
 			assertTrue("span should have no tags", span.tags().isEmpty());
 			assertFalse("span should have no baggage", span.context().baggageItems().iterator().hasNext());
 		} catch (Exception e) {
@@ -94,8 +93,8 @@ public class TracingInterceptorsTest {
 			
 			MockSpan span = serviceTracer.finishedSpans().get(0);
 			assertEquals("span should have default name", span.operationName(), "helloworld.Greeter/SayHello");
-			assertEquals("span should have no parents", span.parentId(), 0);
-			assertEquals("span should log onMessage and onHalfClose", span.logEntries().size(), 2);
+			assertEquals("span should have no parents", 0, span.parentId());
+			assertEquals("span should log onMessage and onHalfClose", 3, span.logEntries().size());
 			assertTrue("span should have no tags", span.tags().isEmpty());
 			assertFalse("span should have no baggage", span.context().baggageItems().iterator().hasNext());
 		} catch (Exception e) {

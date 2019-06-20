@@ -1,28 +1,29 @@
 package io.opentracing.contrib;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 import com.google.common.collect.ImmutableMap;
+
 import io.grpc.BindableService;
 import io.grpc.Context;
 import io.grpc.Contexts;
+import io.grpc.ForwardingServerCall.SimpleForwardingServerCall;
+import io.grpc.ForwardingServerCallListener.SimpleForwardingServerCallListener;
 import io.grpc.Metadata;
 import io.grpc.ServerCall;
 import io.grpc.ServerCallHandler;
 import io.grpc.ServerInterceptor;
 import io.grpc.ServerInterceptors;
 import io.grpc.ServerServiceDefinition;
-import io.grpc.ForwardingServerCallListener;
-
-import io.opentracing.propagation.Format;
-import io.opentracing.propagation.TextMapExtractAdapter;
 import io.opentracing.Span;
 import io.opentracing.SpanContext;
 import io.opentracing.Tracer;
-
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import io.opentracing.propagation.Format;
+import io.opentracing.propagation.TextMapAdapter;
 
 /**
  * An intercepter that applies tracing via OpenTracing to all requests 
@@ -109,57 +110,72 @@ public class ServerTracingInterceptor implements ServerInterceptor {
             }
         }
 
-        Context ctxWithSpan = Context.current().withValue(OpenTracingContextKey.getKey(), span);
-        ServerCall.Listener<ReqT> listenerWithContext = Contexts
-            .interceptCall(ctxWithSpan, call, headers, next);
+		final ServerCall<ReqT, RespT> callWithLog = new SimpleForwardingServerCall<ReqT, RespT>(call) {
 
-        ServerCall.Listener<ReqT> tracingListenerWithContext = 
-            new ForwardingServerCallListener.SimpleForwardingServerCallListener<ReqT>(listenerWithContext) {
+			@Override
+			public void sendMessage(final RespT message) {
+				if (streaming || verbose) {
+					span.log(ImmutableMap.of("Message send", message));
+				}
+				super.sendMessage(message);
+			}
 
-            @Override
-            public void onMessage(ReqT message) {
-                if (streaming || verbose) { span.log(ImmutableMap.of("Message received", message)); }
-                delegate().onMessage(message);
-            }
+		};
 
-            @Override 
-            public void onHalfClose() {
-                if (streaming) { span.log("Client finished sending messages"); }
-                delegate().onHalfClose();
-            }
+		final Context ctxWithSpan = Context.current().withValue(OpenTracingContextKey.getKey(), span);
+		final ServerCall.Listener<ReqT> listenerWithContext = Contexts.interceptCall(ctxWithSpan, callWithLog, headers,
+				next);
 
-            @Override
-            public void onCancel() {
-                span.log("Call cancelled");
-                span.finish();
-                delegate().onCancel();
-            }
+		return new SimpleForwardingServerCallListener<ReqT>(listenerWithContext) {
 
-            @Override
-            public void onComplete() {
-                if (verbose) { span.log("Call completed"); }
-                span.finish();
-                delegate().onComplete();
-            }
-        };
+			@Override
+			public void onMessage(final ReqT message) {
+				if (streaming || verbose) {
+					span.log(ImmutableMap.of("Message received", message));
+				}
+				delegate().onMessage(message);
+			}
 
-        return tracingListenerWithContext; 
+			@Override
+			public void onHalfClose() {
+				if (streaming) {
+					span.log("Client finished sending messages");
+				}
+				delegate().onHalfClose();
+			}
+
+			@Override
+			public void onCancel() {
+				span.log("Call cancelled");
+				span.finish();
+				delegate().onCancel();
+			}
+
+			@Override
+			public void onComplete() {
+				if (verbose) {
+					span.log("Call completed");
+				}
+				span.finish();
+				delegate().onComplete();
+			}
+
+		};
     }
 
     private Span getSpanFromHeaders(Map<String, String> headers, String operationName) {
         Span span;
         try {
-            SpanContext parentSpanCtx = tracer.extract(Format.Builtin.HTTP_HEADERS, 
-                new TextMapExtractAdapter(headers));
+        	final SpanContext parentSpanCtx = tracer.extract(Format.Builtin.TEXT_MAP, new TextMapAdapter(headers));
             if (parentSpanCtx == null) {
-                span = tracer.buildSpan(operationName).startManual();
+                span = tracer.buildSpan(operationName).start();
             } else {
-                span = tracer.buildSpan(operationName).asChildOf(parentSpanCtx).startManual();
+                span = tracer.buildSpan(operationName).asChildOf(parentSpanCtx).start();
             }
         } catch (IllegalArgumentException iae){
             span = tracer.buildSpan(operationName)
                 .withTag("Error", "Extract failed and an IllegalArgumentException was thrown")
-                .startManual();
+                .start();
         }
         return span;  
     }

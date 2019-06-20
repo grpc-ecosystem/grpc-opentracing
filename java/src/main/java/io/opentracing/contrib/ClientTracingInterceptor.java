@@ -191,9 +191,9 @@ public class ClientTracingInterceptor implements ClientInterceptor {
     
     private Span createSpanFromParent(Span parentSpan, String operationName) {
         if (parentSpan == null) {
-            return tracer.buildSpan(operationName).startManual();
+            return tracer.buildSpan(operationName).start();
         } else {
-            return tracer.buildSpan(operationName).asChildOf(parentSpan).startManual();
+            return tracer.buildSpan(operationName).asChildOf(parentSpan).start();
         }
     }
 

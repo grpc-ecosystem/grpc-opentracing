@@ -9,7 +9,7 @@ public class TracedClient {
 	
 	public TracedClient(String host, int port, ClientTracingInterceptor tracingInterceptor) {
 		channel = ManagedChannelBuilder.forAddress(host, port)
-				.usePlaintext(true)
+				.usePlaintext()
 				.build();
 		
 		if(tracingInterceptor==null) {
