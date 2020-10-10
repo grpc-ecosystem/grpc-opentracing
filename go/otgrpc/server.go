@@ -46,6 +46,7 @@ func OpenTracingServerInterceptor(tracer opentracing.Tracer, optFuncs ...Option)
 		serverSpan := tracer.StartSpan(
 			info.FullMethod,
 			ext.RPCServerOption(spanContext),
+			ext.SpanKindRPCServer,
 			gRPCComponentTag,
 		)
 		defer serverSpan.Finish()
@@ -104,6 +105,7 @@ func OpenTracingStreamServerInterceptor(tracer opentracing.Tracer, optFuncs ...O
 		serverSpan := tracer.StartSpan(
 			info.FullMethod,
 			ext.RPCServerOption(spanContext),
+			ext.SpanKindRPCServer,
 			gRPCComponentTag,
 		)
 		defer serverSpan.Finish()
